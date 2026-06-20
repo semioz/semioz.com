@@ -41,12 +41,26 @@ print("hi")
 \`\`\`
 
 ![diagram](/first.png)
+
+**THING_HERE** matters.
+
+| metric | before | after |
+|---|---|---|
+| reward | -0.090 | +0.043 |
+| failures per episode | 7.0 | 1.0 |
 `);
 
   assert.match(html, /<h2[^>]*>Example<\/h2>/);
   assert.match(html, /class="hljs language-python"/);
   assert.match(html, /print/);
   assert.match(html, /<img src="\/first\.png" alt="diagram">/);
+  assert.match(html, /<strong>THING_HERE<\/strong> matters\./);
+  assert.doesNotMatch(html, /\*\*THING_HERE\*\*/);
+  assert.match(html, /<table>/);
+  assert.match(html, /<th>metric<\/th>/);
+  assert.match(html, /<td>reward<\/td>/);
+  assert.match(html, /<td>\+0\.043<\/td>/);
+  assert.doesNotMatch(html, /\|---\|---\|---\|/);
 });
 
 test("article prose text uses theme variables for light-mode readability", async () => {
@@ -104,7 +118,10 @@ Post body.
 
   assert.match(index, /First Post/);
   assert.match(index, /semioz\.com/);
+  assert.match(index, /Semih Berkay Öztürk/);
   assert.doesNotMatch(index, /Semih Berkay Ozturk/);
+  assert.match(index, /class="post-accent"><\/span>/);
+  assert.doesNotMatch(index, /class="post-accent" style=/);
   assert.match(index, /data-theme-toggle/);
   assert.match(index, /aria-label="Switch to light theme"/);
   assert.match(index, /localStorage\.setItem\("theme"/);
@@ -112,7 +129,7 @@ Post body.
   assert.match(index, /aug 13, 2025/);
   assert.match(post, /Post body/);
   assert.match(about, /I’m Semih Berkay Ozturk, a software engineer focused on RL\/post-training and distributed systems/);
-  assert.match(about, /← semioz\.com/);
+  assert.match(about, /← Semih Berkay Öztürk/);
   assert.equal(asset, "fake image");
   assert.equal(cname, "semioz.com\n");
   await assert.rejects(access(join(root, "public", ".DS_Store")));
