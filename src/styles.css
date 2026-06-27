@@ -1,15 +1,15 @@
 :root {
   color-scheme: dark;
-  --bg: #030303;
-  --panel: #111111;
-  --line: #303030;
-  --line-soft: #222222;
-  --text: #c9c4bb;
-  --strong: #f4f1ea;
-  --muted: #888178;
-  --soft: #b2aaa1;
-  --link: #f08a24;
-  --accent-warm: #f08a24;
+  --bg: #282828;
+  --panel: #32302f;
+  --line: #504945;
+  --line-soft: #3c3836;
+  --text: #d5c4a1;
+  --strong: #ebdbb2;
+  --muted: #928374;
+  --soft: #bdae93;
+  --link: #fe8019;
+  --accent-warm: #fe8019;
 }
 
 :root[data-theme="light"] {
@@ -30,7 +30,7 @@
 html {
   background: var(--bg);
   color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 17px;
   line-height: 1.7;
 }
@@ -58,7 +58,7 @@ a:hover { color: var(--strong); }
 
 .brand {
   color: var(--strong);
-  font-size: 1.12rem;
+  font-size: 1.28rem;
   font-weight: 800;
   letter-spacing: .04em;
 }

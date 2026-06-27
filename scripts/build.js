@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const SITE = {
   title: "semioz.com",
   author: "Semih Berkay Öztürk",
-  brand: "Semih Berkay Öztürk",
+  brand: "semioz.com",
   description: "Writing by Semih Berkay Öztürk.",
 };
 
@@ -320,9 +320,12 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
   <meta name="description" content="${escapeAttr(description)}">
   <title>${escapeHtml(title)}</title>
   <script>
-    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
   </script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700;800&display=swap">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -346,7 +349,7 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
       toggle.textContent = theme === "dark" ? "◐" : "◑";
       toggle.setAttribute("aria-label", theme === "dark" ? "Switch to light theme" : "Switch to dark theme");
     };
-    setTheme(document.documentElement.dataset.theme || "dark");
+    setTheme(document.documentElement.dataset.theme || "light");
     toggle.addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
   </script>
 </body>

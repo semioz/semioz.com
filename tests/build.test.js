@@ -118,7 +118,7 @@ Post body.
 
   assert.match(index, /First Post/);
   assert.match(index, /semioz\.com/);
-  assert.match(index, /Semih Berkay Öztürk/);
+  assert.match(index, /semioz\.com/);
   assert.doesNotMatch(index, /Semih Berkay Ozturk/);
   assert.match(index, /class="post-accent"><\/span>/);
   assert.doesNotMatch(index, /class="post-accent" style=/);
@@ -129,7 +129,7 @@ Post body.
   assert.match(index, /aug 13, 2025/);
   assert.match(post, /Post body/);
   assert.match(about, /I’m Semih Berkay Ozturk, a software engineer focused on RL\/post-training and distributed systems/);
-  assert.match(about, /← Semih Berkay Öztürk/);
+  assert.match(about, /← semioz\.com/);
   assert.equal(asset, "fake image");
   assert.equal(cname, "semioz.com\n");
   await assert.rejects(access(join(root, "public", ".DS_Store")));
