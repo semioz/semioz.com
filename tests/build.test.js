@@ -70,6 +70,12 @@ test("article prose text uses theme variables for light-mode readability", async
   assert.doesNotMatch(css, /\.prose\s*\{\s*color:\s*#[0-9a-f]{6}/i);
 });
 
+test("dark mode uses an inky black background", async () => {
+  const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
+
+  assert.match(css, /:root\s*\{\s*color-scheme:\s*dark;\s*--bg:\s*#0b0b0b;/);
+});
+
 test("article pages use a slightly zoomed-out reading scale", async () => {
   const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
 
@@ -125,6 +131,7 @@ Post body.
   assert.match(index, /data-theme-toggle/);
   assert.match(index, /aria-label="Switch to light theme"/);
   assert.match(index, /localStorage\.setItem\("theme"/);
+  assert.match(index, /<section class="section-heading"><span class="section-index">01 \/ WRITING<\/span><\/section>/);
   assert.match(index, /href="\/essays\/first-post\/"/);
   assert.match(index, /aug 13, 2025/);
   assert.match(post, /Post body/);
@@ -133,4 +140,36 @@ Post body.
   assert.equal(asset, "fake image");
   assert.equal(cname, "semioz.com\n");
   await assert.rejects(access(join(root, "public", ".DS_Store")));
+});
+
+test("home page includes an accessible portrait engraving with a non-WebGL fallback", async () => {
+  const root = await mkdtemp(join(tmpdir(), "semihb-test-"));
+  await mkdir(join(root, "content", "essays"), { recursive: true });
+  await mkdir(join(root, "static", "images"), { recursive: true });
+  await writeFile(join(root, "content", "about.md"), "# About\n");
+  await writeFile(join(root, "static", "images", "semihport.jpg"), "portrait");
+
+  await buildSite({ rootDir: root, outDir: join(root, "public") });
+
+  const index = await readFile(join(root, "public", "index.html"), "utf8");
+  assert.match(index, /<a class="brand-lockup" href="\/" aria-label="Home">\s*<figure class="portrait-engraving"/);
+  assert.match(index, /<span class="brand">semioz<\/span>/);
+  assert.match(index, /data-portrait-engraving[^>]*role="img"[^>]*aria-label="Engraved portrait of Semih Berkay Öztürk"/);
+  assert.match(index, /<canvas[^>]*class="portrait-engraving-canvas"/);
+  assert.match(index, /<img[^>]*src="\/images\/semihport\.jpg"[^>]*alt=""[^>]*aria-hidden="true"/);
+  assert.match(index, /<script src="\/portrait-engraving\.js" defer><\/script>/);
+});
+
+test("portrait shader preserves transparent paper around the engraving", async () => {
+  const shader = await readFile(new URL("../static/portrait-engraving.js", import.meta.url), "utf8");
+
+  assert.match(shader, /getContext\("webgl", \{ alpha: true, premultipliedAlpha: false \}\)/);
+});
+
+test("portrait engraving uses a restrained hero footprint", async () => {
+  const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
+  const mobileRules = css.match(/@media \(max-width: 720px\) \{([\s\S]*?)\n\}\n\n@media/)?.[1] || "";
+
+  assert.match(css, /\.portrait-engraving\s*\{[^}]*height:\s*72px[^}]*width:\s*72px/s);
+  assert.doesNotMatch(mobileRules, /portrait-engraving/);
 });

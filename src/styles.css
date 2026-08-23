@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  --bg: #282828;
+  --bg: #0b0b0b;
   --panel: #32302f;
   --line: #504945;
   --line-soft: #3c3836;
@@ -63,6 +63,8 @@ a:hover { color: var(--strong); }
   letter-spacing: .04em;
 }
 
+.brand-lockup { align-items: center; display: inline-flex; gap: 10px; }
+
 .site-header nav {
   display: flex;
   gap: clamp(18px, 5vw, 54px);
@@ -90,18 +92,37 @@ a:hover { color: var(--strong); }
   margin-bottom: 28px;
 }
 
-.section-heading {
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-weight: 800;
-  letter-spacing: .22em;
-  margin: 0 0 18px;
-  padding-top: 28px;
+.portrait-engraving {
+  align-items: center;
+  display: inline-flex;
+  height: 72px;
+  justify-content: center;
+  margin: 0;
+  position: relative;
+  transition: transform 450ms cubic-bezier(.2, .7, .2, 1);
+  width: 72px;
 }
 
-.section-heading span { letter-spacing: 0; margin-right: 14px; }
+.brand-lockup:focus-visible { outline: 2px solid var(--link); outline-offset: 6px; }
+.brand-lockup:hover .portrait-engraving, .brand-lockup:focus-visible .portrait-engraving { transform: translateY(-3px) scale(1.04); }
+.portrait-engraving-canvas, .portrait-engraving-fallback { height: 100%; width: 100%; }
+.portrait-engraving-canvas { display: none; }
+.portrait-engraving-fallback { object-fit: cover; }
+.portrait-engraving.is-rendered .portrait-engraving-canvas { display: block; }
+.portrait-engraving.is-rendered .portrait-engraving-fallback { opacity: 0; pointer-events: none; position: absolute; }
 
-.post-list { border-top: 1px dashed var(--line-soft); }
+.section-heading {
+  align-items: baseline;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  font-weight: 800;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+}
+
+.section-index { color: var(--strong); font-size: .78rem; letter-spacing: .14em; }
+
+.post-list { border-top: 0; }
 
 .post-row {
   display: grid;
@@ -181,4 +202,9 @@ h1 {
   .site-header { align-items: flex-start; flex-direction: column; margin-bottom: 52px; }
   .post-row { grid-template-columns: 6px 1fr; }
   .post-meta { grid-column: 2; white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portrait-engraving { transition: none; }
+  .brand-lockup:hover .portrait-engraving, .brand-lockup:focus-visible .portrait-engraving { transform: none; }
 }

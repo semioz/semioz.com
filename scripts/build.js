@@ -6,6 +6,7 @@ const SITE = {
   title: "semioz.com",
   author: "Semih Berkay Öztürk",
   brand: "semioz.com",
+  headerBrand: "semioz",
   description: "Writing by Semih Berkay Öztürk.",
 };
 
@@ -275,12 +276,12 @@ function renderIndex(posts) {
   return layout({
     title: SITE.title,
     description: SITE.description,
-    brand: SITE.brand,
+    brand: SITE.headerBrand,
     main: `<section class="hero">
   <p>${posts.length} posts · updated ${escapeHtml(updated)}</p>
 </section>
 
-<section class="section-heading"><span>//</span> writing</section>
+<section class="section-heading"><span class="section-index">01 / WRITING</span></section>
 <section class="post-list">${rows}</section>`,
   });
 }
@@ -312,6 +313,13 @@ function renderAbout(page) {
 }
 
 function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
+  const portrait = brand === SITE.headerBrand
+    ? `<figure class="portrait-engraving" data-portrait-engraving role="img" aria-label="Engraved portrait of Semih Berkay Öztürk">
+        <canvas class="portrait-engraving-canvas" aria-hidden="true"></canvas>
+        <img class="portrait-engraving-fallback" src="/images/semihport.jpg" alt="" aria-hidden="true">
+      </figure>`
+    : "";
+
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -331,7 +339,7 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
 <body>
   <div class="shell">
     <header class="site-header">
-      <a class="brand" href="/" aria-label="Home">${escapeHtml(brand)}</a>
+      <a class="brand-lockup" href="/" aria-label="Home">${portrait}<span class="brand">${escapeHtml(brand)}</span></a>
       <nav aria-label="Primary navigation">
         <a href="/about/">about</a>
         <a href="https://github.com/semioz/">github</a>
@@ -352,6 +360,7 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
     setTheme(document.documentElement.dataset.theme || "light");
     toggle.addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
   </script>
+  <script src="/portrait-engraving.js" defer></script>
 </body>
 </html>
 `;
