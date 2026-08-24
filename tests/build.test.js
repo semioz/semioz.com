@@ -126,12 +126,12 @@ Post body.
   assert.match(index, /semioz\.com/);
   assert.match(index, /semioz\.com/);
   assert.doesNotMatch(index, /Semih Berkay Ozturk/);
-  assert.match(index, /class="post-accent"><\/span>/);
-  assert.doesNotMatch(index, /class="post-accent" style=/);
+  assert.doesNotMatch(index, /class="post-accent"/);
+  assert.match(index, /family=Google\+Sans:/);
   assert.match(index, /data-theme-toggle/);
   assert.match(index, /aria-label="Switch to light theme"/);
   assert.match(index, /localStorage\.setItem\("theme"/);
-  assert.match(index, /<section class="section-heading"><span class="section-index">01 \/ WRITING<\/span><\/section>/);
+  assert.match(index, /<section class="section-heading"><span class="section-index">WRITING<\/span><\/section>/);
   assert.match(index, /href="\/essays\/first-post\/"/);
   assert.match(index, /aug 13, 2025/);
   assert.match(post, /Post body/);
@@ -163,7 +163,8 @@ test("home page includes an accessible portrait engraving with a non-WebGL fallb
 test("portrait shader preserves transparent paper around the engraving", async () => {
   const shader = await readFile(new URL("../static/portrait-engraving.js", import.meta.url), "utf8");
 
-  assert.match(shader, /getContext\("webgl", \{ alpha: true, premultipliedAlpha: false \}\)/);
+  assert.match(shader, /getContext\("webgl", \{ alpha: true \}\)/);
+  assert.match(shader, /vec4\(u_ink \* alpha, alpha\)/);
 });
 
 test("portrait engraving uses a restrained hero footprint", async () => {

@@ -8,16 +8,16 @@ topics:
   - kv-cache
 ---
 
-I've been reading through how vLLM, SGLang, and NVIDIA's Dynamo handle KV-cache when memory gets tight. The papers are clear enough, but I didn't really understand the tradeoffs until I tried to turn them into code. So I built a small RL environment around the part of the problem I cared about: the inference server is filling up, requests are queueing, and something has to decide what to evict, compress, or swap before the system falls behind.
+I've been digging into how inference engines like vLLM, SGLang, and NVIDIA Dynamo manage KV-cache under memory pressure. Built a small RL environment around that specific problem: simulating an inference server filling up, requests queueing, and an agent that has to decide what to evict, compress, or swap before the system falls behind.
 
 ## The setting
 
-Every time an LLM generates tokens, it stores key/value tensors from attention in the KV-cache. A single sequence can occupy hundreds of megabytes. Run enough users in parallel and the GPU eventually runs out of room. When that happens, there are four options, and none of them are free:
+Every time an LLM generates tokens, it stores key/value tensors from attention in the KV-cache. A single sequence can occupy hundreds of megabytes. When it reaches enough users in parallel and the GPU eventually runs out of room. When that happens, there are four options:
 
-- **Evict or preempt** a sequence — frees memory, but you pay for it later in recomputation, latency, or an outright failed request.
+- **Evict or preempt** a sequence which frees memory, but you pay for it later in recomputation, latency, or an outright failed request.
 - **Compress** the cache via quantization (here: fp16 → int8 → int4, halving memory each step).
-- **Swap to CPU** — cheap on the GPU side, slow when the sequence is needed again.
-- **Do nothing** — fine when there's room, dangerous when there isn't.
+- **Swap to CPU** which is cheap on the GPU side, slow when the sequence is needed again.
+- **Do nothing** which is fine when there's room, dangerous when there isn't.
 
 I wanted a sandbox where a model has to make these decisions explicitly, and where I could later train or evaluate policies without standing up a real serving stack.
 
@@ -45,15 +45,15 @@ class CacheEntry:
 
 The two fields that matter most here are `block_type` and `shared_prefix_id`.
 
-Real serving systems don't treat all KV-cache the same, and once you look at it the reason is obvious. A system prompt gets reused on every turn — evicting it would be a disaster. Reasoning tokens are the opposite: once the thinking phase ends, nothing reads them again. Following the categorization in [NVIDIA's Dynamo blog on agentic inference](https://docs.nvidia.com/dynamo/dev/blog/agentic-inference), I tagged blocks by how likely they are to be reused:
+Real serving systems don't treat all KV-cache the same. Since a system prompt gets reused on every turn, evicting it would be a disaster. But reasoning tokens are the opposite: once the thinking phase ends, nothing reads them again. Following the categorization in [NVIDIA's Dynamo blog on agentic inference](https://docs.nvidia.com/dynamo/dev/blog/agentic-inference), I tagged blocks by how likely they are to be reused:
 
 ```python
 BLOCK_TYPE_EVICTION_VALUE = {
     "system": 0.0,      # highest reuse, never evict
-    "context": 0.25,    # conversation history — high reuse
-    "generation": 0.5,  # active generation — moderate reuse
-    "reasoning": 0.9,   # thinking tokens — near-zero reuse after completion
-    "ephemeral": 1.0,   # subagent/temp — zero reuse, safe to evict
+    "context": 0.25,    # conversation history, high reuse
+    "generation": 0.5,  # active generation, moderate reuse
+    "reasoning": 0.9,   # thinking tokens, near-zero reuse after completion
+    "ephemeral": 1.0,   # subagent/temp, zero reuse, safe to evict
 }
 ```
 
@@ -89,7 +89,7 @@ rubric.add_reward_func(risky_eviction_penalty, weight=0.02)
 
 ### Failure penalty (weight: 0.40)
 
-In real serving, failures cascade. One rejected request creates backpressure that causes more, and the system degrades quickly from there. The penalty mirrors that with an accelerating cost:
+In real serving, failures cascade. One rejected request creates backpressure, which causes more rejections, and the whole thing degrades fast from there. The penalty tries to mirror that: cost accelerates instead of staying flat.
 
 ```python
 penalty = min(failures * 0.15 + max(0, failures - 2) * 0.1, 1.0)
@@ -185,7 +185,7 @@ Fixing those changed the reward landscape entirely. Same model (gpt-5.4-mini, ze
 | throughput reward | 0.037 | **0.139** |
 | headroom bonus | 0.081 | **0.321** |
 
-This isn't a trained policy yet — I ran zero-shot first because it's the fastest way to check whether the environment is giving the model a usable control problem to begin with. Failures dropped from 7 to 1. Pressure went from half the episode to almost nothing. Compress usage nearly tripled once it actually had an effect. The model averaged ~3 actions per turn, mixing eviction and compression based on the current pressure level instead of repeatedly calling one tool.
+This isn't a trained policy yet, I ran zero-shot first because it's the fastest way to check whether the environment is giving the model a usable control problem to begin with. Failures dropped from 7 to 1. Pressure went from half the episode to almost nothing. Compress usage nearly tripled once it actually had an effect. The model averaged ~3 actions per turn, mixing eviction and compression based on the current pressure level instead of repeatedly calling one tool.
 
 Full rollout breakdown from `prime eval run`:
 
@@ -194,8 +194,6 @@ Full rollout breakdown from `prime eval run`:
 ![evaluation summary](/evalsum.png)
 
 ## Takeaways
-
-A few things that became much clearer through building the simulator than from reading about them:
 
 - **Block types carry most of the weight.** A system prompt and a reasoning trace can occupy the same number of bytes and have very different reuse profiles. Treating them uniformly is the easy way to make bad decisions.
 - **Shared-prefix deduplication makes eviction non-local.** The memory you free by evicting a sequence depends on what else references the same prefix pages. The papers mention this, but it's easy to underestimate until you've watched a free release nothing.

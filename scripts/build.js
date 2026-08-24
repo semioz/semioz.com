@@ -263,7 +263,6 @@ function renderIndex(posts) {
     .map((post) => {
       const topic = post.topics[0] || "essay";
       return `<a class="post-row" href="/essays/${post.slug}/">
-  <span class="post-accent"></span>
   <span class="post-main">
     <span class="post-title">${escapeHtml(post.title)}</span>
     ${post.description ? `<span class="post-description">${escapeHtml(post.description)}</span>` : ""}
@@ -281,7 +280,7 @@ function renderIndex(posts) {
   <p>${posts.length} posts · updated ${escapeHtml(updated)}</p>
 </section>
 
-<section class="section-heading"><span class="section-index">01 / WRITING</span></section>
+<section class="section-heading"><span class="section-index">WRITING</span></section>
 <section class="post-list">${rows}</section>`,
   });
 }
@@ -333,7 +332,7 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>

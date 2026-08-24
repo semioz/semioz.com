@@ -23,7 +23,8 @@ const fragmentShaderSource = `
     float crossWave = 0.5 + 0.5 * sin((v_uv.x * u_resolution.x * 0.19 - v_uv.y * u_resolution.y * 0.19) * 6.2831853);
     float midtone = smoothstep(0.1, 0.32, tone) * (1.0 - smoothstep(0.55, 0.9, tone));
     float crosshatch = smoothstep(0.9, 0.985, crossWave) * midtone * u_hover;
-    gl_FragColor = vec4(u_ink, clamp(primary + crosshatch, 0.0, 1.0));
+    float alpha = clamp(primary + crosshatch, 0.0, 1.0);
+    gl_FragColor = vec4(u_ink * alpha, alpha);
   }
 `;
 
@@ -60,7 +61,7 @@ function initializePortrait(element) {
   const canvas = element.querySelector("canvas");
   const fallback = element.querySelector("img");
   const interactionTarget = element.closest(".brand-lockup") || element;
-  const gl = canvas.getContext("webgl", { alpha: true, premultipliedAlpha: false }) || canvas.getContext("experimental-webgl", { alpha: true, premultipliedAlpha: false });
+  const gl = canvas.getContext("webgl", { alpha: true }) || canvas.getContext("experimental-webgl", { alpha: true });
   if (!gl) return;
 
   const program = createProgram(gl);
