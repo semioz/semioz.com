@@ -68,7 +68,7 @@ a:hover { color: var(--strong); }
 .site-header nav {
   display: flex;
   gap: clamp(18px, 5vw, 54px);
-  color: var(--muted);
+  color: var(--accent-warm);
   font-weight: 700;
 }
 
@@ -76,7 +76,7 @@ a:hover { color: var(--strong); }
   appearance: none;
   background: transparent;
   border: 0;
-  color: var(--muted);
+  color: var(--accent-warm);
   cursor: pointer;
   font: inherit;
   font-weight: 700;
@@ -123,6 +123,16 @@ a:hover { color: var(--strong); }
 .section-index { color: var(--strong); font-size: .78rem; letter-spacing: .14em; }
 
 .post-list { border-top: 0; }
+
+.social-links {
+  display: flex;
+  gap: 18px;
+  justify-content: flex-end;
+  padding-top: 22px;
+}
+
+.social-links a { color: var(--accent-warm); }
+.social-links svg { display: block; fill: currentColor; height: 22px; width: 22px; }
 
 .post-row {
   display: grid;

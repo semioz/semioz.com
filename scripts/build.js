@@ -166,6 +166,7 @@ export async function buildSite({ rootDir = process.cwd(), outDir = join(rootDir
 
   await writePage(join(outDir, "index.html"), renderIndex(resolvedPosts));
   await writePage(join(outDir, "about", "index.html"), renderAbout(about));
+  await writePage(join(outDir, "projects", "index.html"), renderProjects());
 
   for (const post of resolvedPosts) {
     await writePage(join(outDir, "essays", post.slug, "index.html"), renderPost(post));
@@ -281,8 +282,20 @@ function renderIndex(posts) {
 </section>
 
 <section class="section-heading"><span class="section-index">WRITING</span></section>
-<section class="post-list">${rows}</section>`,
+<section class="post-list">${rows}</section>
+${renderSocialLinks()}`,
   });
+}
+
+function renderSocialLinks() {
+  return `<nav class="social-links" aria-label="Social links">
+  <a href="https://github.com/semioz/" aria-label="GitHub">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.4-5.5-6a4.7 4.7 0 0 1 1.2-3.3c-.1-.3-.5-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2a4.7 4.7 0 0 1 1.2 3.3c0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A12 12 0 0 0 12 .3Z"/></svg>
+  </a>
+  <a href="https://x.com/semiozz" aria-label="X">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2.3h3.7l-8.1 9.2L24 21.7h-7.4l-5.8-7.6-6.7 7.6H.4l8.7-9.9L0 2.3h7.6l5.2 6.9 6.1-6.9Zm-1.3 17.4h2L6.5 4.2H4.4l13.2 15.5Z"/></svg>
+  </a>
+</nav>`;
 }
 
 function renderPost(post) {
@@ -308,6 +321,14 @@ function renderAbout(page) {
   <header class="article-header"><h1>about</h1></header>
   <div class="prose">${page.html}</div>
 </article>`,
+  });
+}
+
+function renderProjects() {
+  return layout({
+    title: `projects - ${SITE.title}`,
+    description: SITE.description,
+    main: "",
   });
 }
 
@@ -340,9 +361,9 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
     <header class="site-header">
       <a class="brand-lockup" href="/" aria-label="Home">${portrait}<span class="brand">${escapeHtml(brand)}</span></a>
       <nav aria-label="Primary navigation">
+        <a href="/projects/">projects</a>
+        <a href="/">blog</a>
         <a href="/about/">about</a>
-        <a href="https://github.com/semioz/">github</a>
-        <a href="https://x.com/semiozz">x</a>
         <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light theme" title="Switch theme">◐</button>
       </nav>
     </header>
