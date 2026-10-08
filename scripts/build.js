@@ -163,6 +163,12 @@ export async function buildSite({ rootDir = process.cwd(), outDir = join(rootDir
   resolvedPosts.sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
 
   const about = await readContentFile(join(contentDir, "about.md"));
+  await writeFile(join(outDir, "search-index.json"), JSON.stringify(resolvedPosts.map((post) => ({
+    title: post.title,
+    description: post.description,
+    url: `/essays/${encodeURIComponent(post.slug)}/`,
+    text: post.body,
+  }))));
 
   await writePage(join(outDir, "index.html"), renderIndex(resolvedPosts));
   await writePage(join(outDir, "about", "index.html"), renderAbout(about));
@@ -364,6 +370,9 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
         <a href="/projects/">projects</a>
         <a href="/">blog</a>
         <a href="/about/">about</a>
+        <button class="search-toggle" type="button" data-search-toggle aria-label="Search articles" aria-keyshortcuts="Meta+K Control+K" title="Search (⌘K / Ctrl+K)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6"/></svg>
+        </button>
         <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light theme" title="Switch theme">◐</button>
       </nav>
     </header>
@@ -380,6 +389,16 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
     setTheme(document.documentElement.dataset.theme || "light");
     toggle.addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
   </script>
+  <dialog class="search-dialog" aria-label="Search articles" data-search-dialog>
+    <div class="search-header">
+      <input type="search" data-search-input aria-label="Search blog titles and article text" placeholder="Search articles…" autocomplete="off" autofocus>
+      <button type="button" data-search-close aria-label="Close search">✕</button>
+    </div>
+    <p class="search-status" data-search-status role="status"></p>
+    <nav class="search-results" data-search-results aria-label="Search results"></nav>
+    <p class="search-hint">↑↓ navigate · enter open · esc close</p>
+  </dialog>
+  <script src="/search.js" defer></script>
   <script src="/portrait-engraving.js" defer></script>
 </body>
 </html>
