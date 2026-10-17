@@ -118,25 +118,31 @@ Post body.
 
   const index = await readFile(join(root, "public", "index.html"), "utf8");
   const post = await readFile(join(root, "public", "essays", "first-post", "index.html"), "utf8");
-  const about = await readFile(join(root, "public", "about", "index.html"), "utf8");
+  const writing = await readFile(join(root, "public", "writing", "index.html"), "utf8");
   const asset = await readFile(join(root, "public", "first.png"), "utf8");
   const cname = await readFile(join(root, "public", "CNAME"), "utf8");
 
   assert.match(index, /First Post/);
   assert.match(index, /semioz\.com/);
   assert.match(index, /semioz\.com/);
-  assert.doesNotMatch(index, /Semih Berkay Ozturk/);
+  assert.match(index, /Semih Berkay Ozturk/);
   assert.doesNotMatch(index, /class="post-accent"/);
   assert.match(index, /family=Google\+Sans:/);
   assert.match(index, /data-theme-toggle/);
   assert.match(index, /aria-label="Switch to light theme"/);
   assert.match(index, /localStorage\.setItem\("theme"/);
-  assert.match(index, /<section class="section-heading"><span class="section-index">WRITING<\/span><\/section>/);
+  assert.match(index, /<section class="section-heading"><span class="section-index">RECENT WRITINGS<\/span><\/section>/);
   assert.match(index, /href="\/essays\/first-post\/"/);
   assert.match(index, /aug 13, 2025/);
   assert.match(post, /Post body/);
-  assert.match(about, /I’m Semih Berkay Ozturk, a software engineer focused on RL\/post-training and distributed systems/);
-  assert.match(about, /← semioz\.com/);
+  assert.match(index, /I’m Semih Berkay Ozturk, a software engineer focused on RL\/post-training and distributed systems/);
+  assert.match(index, /href="\/writing\/">writing<\/a>/);
+  assert.match(index, /⌘\+K/);
+  assert.match(writing, /href="\/essays\/first-post\/"/);
+  assert.match(writing, /← semioz\.com/);
+  assert.doesNotMatch(writing, /home-intro/);
+  await assert.rejects(access(join(root, "public", "about")));
+  await assert.rejects(access(join(root, "public", "projects")));
   assert.equal(asset, "fake image");
   assert.equal(cname, "semioz.com\n");
   await assert.rejects(access(join(root, "public", ".DS_Store")));

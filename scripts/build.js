@@ -170,9 +170,8 @@ export async function buildSite({ rootDir = process.cwd(), outDir = join(rootDir
     text: post.body,
   }))));
 
-  await writePage(join(outDir, "index.html"), renderIndex(resolvedPosts));
-  await writePage(join(outDir, "about", "index.html"), renderAbout(about));
-  await writePage(join(outDir, "projects", "index.html"), renderProjects());
+  await writePage(join(outDir, "index.html"), renderIndex(resolvedPosts, about));
+  await writePage(join(outDir, "writing", "index.html"), renderWriting(resolvedPosts));
 
   for (const post of resolvedPosts) {
     await writePage(join(outDir, "essays", post.slug, "index.html"), renderPost(post));
@@ -264,9 +263,8 @@ function cleanFrontmatterValue(value) {
   return trimmed.replace(/^['"]|['"]$/g, "");
 }
 
-function renderIndex(posts) {
-  const updated = posts[0]?.date ? formatMonth(posts[0]) : "now";
-  const rows = posts
+function renderPostRows(posts) {
+  return posts
     .map((post) => {
       const topic = post.topics[0] || "essay";
       return `<a class="post-row" href="/essays/${post.slug}/">
@@ -278,18 +276,30 @@ function renderIndex(posts) {
 </a>`;
     })
     .join("\n");
+}
 
+function renderIndex(posts, about) {
+  const updated = posts[0]?.date ? formatMonth(posts[0]) : "now";
   return layout({
     title: SITE.title,
     description: SITE.description,
     brand: SITE.headerBrand,
-    main: `<section class="hero">
+    main: `<section class="home-intro prose" aria-label="About">${about.html}</section>
+<section class="hero">
   <p>${posts.length} posts · updated ${escapeHtml(updated)}</p>
 </section>
 
-<section class="section-heading"><span class="section-index">WRITING</span></section>
-<section class="post-list">${rows}</section>
+<section class="section-heading"><span class="section-index">RECENT WRITINGS</span></section>
+<section class="post-list">${renderPostRows(posts)}</section>
 ${renderSocialLinks()}`,
+  });
+}
+
+function renderWriting(posts) {
+  return layout({
+    title: `writing - ${SITE.title}`,
+    description: SITE.description,
+    main: `<section class="post-list" aria-label="Writing">${renderPostRows(posts)}</section>`,
   });
 }
 
@@ -316,25 +326,6 @@ function renderPost(post) {
   </header>
   <div class="prose">${post.html}</div>
 </article>`,
-  });
-}
-
-function renderAbout(page) {
-  return layout({
-    title: `about - ${SITE.title}`,
-    description: SITE.description,
-    main: `<article class="article compact">
-  <header class="article-header"><h1>about</h1></header>
-  <div class="prose">${page.html}</div>
-</article>`,
-  });
-}
-
-function renderProjects() {
-  return layout({
-    title: `projects - ${SITE.title}`,
-    description: SITE.description,
-    main: "",
   });
 }
 
@@ -367,11 +358,9 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
     <header class="site-header">
       <a class="brand-lockup" href="/" aria-label="Home">${portrait}<span class="brand">${escapeHtml(brand)}</span></a>
       <nav aria-label="Primary navigation">
-        <a href="/projects/">projects</a>
-        <a href="/">blog</a>
-        <a href="/about/">about</a>
+        <a href="/writing/">writing</a>
         <button class="search-toggle" type="button" data-search-toggle aria-label="Search articles" aria-keyshortcuts="Meta+K Control+K" title="Search (⌘K / Ctrl+K)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6"/></svg>
+          <span aria-hidden="true">⌘+K</span>
         </button>
         <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to light theme" title="Switch theme">◐</button>
       </nav>

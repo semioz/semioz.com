@@ -86,7 +86,6 @@ a:hover { color: var(--strong); }
 
 .theme-toggle:hover, .search-toggle:hover { color: var(--strong); }
 .search-toggle { display: flex; align-items: center; }
-.search-toggle svg { fill: none; stroke: currentColor; stroke-width: 2; height: 20px; width: 20px; }
 
 .search-dialog {
   background: var(--bg);
@@ -113,6 +112,17 @@ body:has(.search-dialog[open]) { overflow: hidden; }
 .search-results a:hover, .search-results a:focus-visible { background: var(--panel); }
 .search-dialog :focus-visible { outline: 2px solid var(--accent-warm); outline-offset: 2px; }
 .search-hint { border-top: 1px solid var(--line); padding-top: 12px; }
+
+.home-intro {
+  max-width: 760px;
+  margin-bottom: 48px;
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.home-intro p { margin-bottom: 16px; }
+.home-intro p:first-child { color: var(--strong); font-size: 1.25rem; font-weight: 600; }
+.home-intro p:last-child { margin-bottom: 0; }
 
 .hero {
   color: var(--muted);
@@ -204,6 +214,7 @@ h1 {
 }
 
 .prose { color: var(--text); }
+.article .prose { font-size: 18px; }
 .prose h2, .prose h3 { color: var(--strong); line-height: 1.25; margin: 2.3em 0 .75em; }
 .prose h2 { font-size: 1.48rem; }
 .prose h3 { font-size: 1.14rem; }

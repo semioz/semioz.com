@@ -5,6 +5,6 @@ aliases = ["about-me", "semih-ozturk", "profile"]
 author = "Semih Ozturk"
 +++
 
-I'm [Semih Berkay Ozturk](https://www.linkedin.com/in/semioz/), a software engineer focused on RL/post-training and distributed systems. I like building systems that are scalable, reliable, and useful in practice.
+I'm [Semih Berkay Ozturk](https://www.linkedin.com/in/semioz/),
 
-You can find what I'm working on here.
+I’m a software engineer focused on inference engineering, reinforcement learning, and post-training. My background is in backend engineering, with experience across several companies.
