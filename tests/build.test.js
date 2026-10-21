@@ -138,6 +138,10 @@ Post body.
   assert.match(index, /I’m Semih Berkay Ozturk, a software engineer focused on RL\/post-training and distributed systems/);
   assert.match(index, /href="\/writing\/">writing<\/a>/);
   assert.match(index, /⌘\+K/);
+  const favicon = index.match(/href="data:image\/svg\+xml,([^"]+)"/);
+  assert.ok(favicon);
+  assert.match(decodeURIComponent(favicon[1]), /👾/);
+  assert.doesNotMatch(index, /href="\/favicon\.svg"/);
   assert.match(writing, /href="\/essays\/first-post\/"/);
   assert.match(writing, /← semioz\.com/);
   assert.doesNotMatch(writing, /home-intro/);
