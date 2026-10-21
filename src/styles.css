@@ -30,12 +30,13 @@
 html {
   background: var(--bg);
   color: var(--text);
-  font-family: "Google Sans", sans-serif;
+  font-family: "IBM Plex Mono", monospace;
   font-size: 17px;
   line-height: 1.7;
 }
 
 body { margin: 0; }
+code, pre { font-family: inherit; }
 
 ::selection { background: var(--accent-warm); color: #030303; }
 
