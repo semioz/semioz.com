@@ -5,6 +5,6 @@ aliases = ["about-me", "semih-ozturk", "profile"]
 author = "Semih Ozturk"
 +++
 
-I'm [Semih Berkay Ozturk](https://www.linkedin.com/in/semioz/),
+I'm Semih!
 
-I’m a software engineer focused on inference engineering, reinforcement learning, and post-training. My background is in backend engineering, with experience across several companies.
+Lately I work on reinforcement learning/post-training and inference systems. Right now I’m an RL research resident at [Prime Intellect](https://primeintellect.ai), building robotics environments.

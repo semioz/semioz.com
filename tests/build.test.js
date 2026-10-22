@@ -52,6 +52,7 @@ print("hi")
 
   assert.match(html, /<h2[^>]*>Example<\/h2>/);
   assert.match(html, /class="hljs language-python"/);
+  assert.match(html, /<span class="hljs-/);
   assert.match(html, /print/);
   assert.match(html, /<img src="\/first\.png" alt="diagram">/);
   assert.match(html, /<strong>THING_HERE<\/strong> matters\./);
@@ -127,7 +128,8 @@ Post body.
   assert.match(index, /semioz\.com/);
   assert.match(index, /Semih Berkay Ozturk/);
   assert.doesNotMatch(index, /class="post-accent"/);
-  assert.match(index, /family=Merriweather:/);
+  assert.match(index, /href="https:\/\/www\.linkedin\.com\/in\/semioz\/" aria-label="LinkedIn"/);
+  assert.match(index, /family=IBM\+Plex\+Sans:/);
   assert.match(index, /data-theme-toggle/);
   assert.match(index, /aria-label="Switch to light theme"/);
   assert.match(index, /localStorage\.setItem\("theme"/);
