@@ -127,7 +127,7 @@ Post body.
   assert.match(index, /semioz\.com/);
   assert.match(index, /Semih Berkay Ozturk/);
   assert.doesNotMatch(index, /class="post-accent"/);
-  assert.match(index, /family=IBM\+Plex\+Mono:/);
+  assert.match(index, /family=Merriweather:/);
   assert.match(index, /data-theme-toggle/);
   assert.match(index, /aria-label="Switch to light theme"/);
   assert.match(index, /localStorage\.setItem\("theme"/);
