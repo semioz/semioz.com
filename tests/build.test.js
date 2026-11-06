@@ -154,6 +154,47 @@ Post body.
   await assert.rejects(access(join(root, "public", ".DS_Store")));
 });
 
+test("draft posts have a direct URL but are absent from listings and search", async () => {
+  const root = await mkdtemp(join(tmpdir(), "semihb-test-"));
+  const essays = join(root, "content", "essays");
+  await mkdir(essays, { recursive: true });
+  await writeFile(join(root, "content", "about.md"), "# About\n");
+  await writeFile(join(essays, "published.md"), `---
+title: Published Post
+date: 2025-01-01
+draft: false
+---
+
+Published body.
+`);
+  await writeFile(join(essays, "unpublished.md"), `---
+title: Unpublished Post
+date: 2026-01-01
+draft: true
+---
+
+Unpublished body.
+`);
+
+  await buildSite({ rootDir: root, outDir: join(root, "public") });
+
+  const index = await readFile(join(root, "public", "index.html"), "utf8");
+  const writing = await readFile(join(root, "public", "writing", "index.html"), "utf8");
+  const search = await readFile(join(root, "public", "search-index.json"), "utf8");
+  const draft = await readFile(join(root, "public", "essays", "unpublished", "index.html"), "utf8");
+  const published = await readFile(join(root, "public", "essays", "published", "index.html"), "utf8");
+
+  assert.match(index, /1 posts · updated january 2025/);
+  for (const page of [index, writing, search]) {
+    assert.match(page, /Published Post/);
+    assert.doesNotMatch(page, /Unpublished Post|unpublished/);
+  }
+  assert.match(draft, /Unpublished Post/);
+  assert.match(draft, /Unpublished body\./);
+  assert.match(draft, /<meta name="robots" content="noindex">/);
+  assert.doesNotMatch(published, /<meta name="robots" content="noindex">/);
+});
+
 test("home page includes an accessible portrait engraving with a non-WebGL fallback", async () => {
   const root = await mkdtemp(join(tmpdir(), "semihb-test-"));
   await mkdir(join(root, "content", "essays"), { recursive: true });

@@ -142,6 +142,7 @@ export async function readContentFile(filePath) {
   return {
     ...data,
     slug,
+    draft: data.draft === "true",
     title,
     description: data.description || "",
     topics: Array.isArray(data.topics) ? data.topics : [],
@@ -169,17 +170,18 @@ export async function buildSite({ rootDir = process.cwd(), outDir = join(rootDir
     .map((file) => readContentFile(file));
   const resolvedPosts = await Promise.all(posts);
   resolvedPosts.sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
+  const publishedPosts = resolvedPosts.filter((post) => !post.draft);
 
   const about = await readContentFile(join(contentDir, "about.md"));
-  await writeFile(join(outDir, "search-index.json"), JSON.stringify(resolvedPosts.map((post) => ({
+  await writeFile(join(outDir, "search-index.json"), JSON.stringify(publishedPosts.map((post) => ({
     title: post.title,
     description: post.description,
     url: `/essays/${encodeURIComponent(post.slug)}/`,
     text: post.body,
   }))));
 
-  await writePage(join(outDir, "index.html"), renderIndex(resolvedPosts, about));
-  await writePage(join(outDir, "writing", "index.html"), renderWriting(resolvedPosts));
+  await writePage(join(outDir, "index.html"), renderIndex(publishedPosts, about));
+  await writePage(join(outDir, "writing", "index.html"), renderWriting(publishedPosts));
 
   for (const post of resolvedPosts) {
     await writePage(join(outDir, "essays", post.slug, "index.html"), renderPost(post));
@@ -329,6 +331,7 @@ function renderPost(post) {
   return layout({
     title: `${post.title} - ${SITE.title}`,
     description: post.description || SITE.description,
+    noindex: post.draft,
     main: `<article class="article">
   <header class="article-header">
     <p class="article-meta">${formatLongDate(post)} · approx ${readingMinutes(post.body)}m read</p>
@@ -340,7 +343,7 @@ function renderPost(post) {
   });
 }
 
-function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
+function layout({ title, description, main, noindex = false, brand = `← ${SITE.brand}` }) {
   const portrait = brand === SITE.headerBrand
     ? `<figure class="portrait-engraving" data-portrait-engraving role="img" aria-label="Engraved portrait of Semih Berkay Öztürk">
         <canvas class="portrait-engraving-canvas" aria-hidden="true"></canvas>
@@ -354,6 +357,7 @@ function layout({ title, description, main, brand = `← ${SITE.brand}` }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${escapeAttr(description)}">
+  ${noindex ? '<meta name="robots" content="noindex">' : ""}
   <title>${escapeHtml(title)}</title>
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
