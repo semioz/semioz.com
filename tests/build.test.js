@@ -353,7 +353,7 @@ test("workshop embed stays literal inside fenced code and editorial comments sta
 
 test("performance figures stack at a capped width with transparent backgrounds", async () => {
   const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
-  const results = css.match(/\.passk-results\s*\{([^}]+)\}/)?.[1];
+  const results = css.match(/^\.passk-results\s*\{([^}]+)\}/m)?.[1];
   assert.match(results, /grid-template-columns:\s*minmax\(0, 1fr\)/);
   assert.match(results, /width:\s*min\(980px, calc\(100vw - 48px\)\)/);
   const card = css.match(/\.passk-card\s*\{([^}]+)\}/)?.[1];
