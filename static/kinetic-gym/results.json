@@ -1,16 +1,16 @@
 {
   "dummy": false,
-  "levelNote": "Not every level was run for every model. Conveyor: the gate-qualified levels 1 and 3–6 for both models. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol and levels 1–2 for DeepSeek, too few to include in the overall curve. Empty cells are not measured yet.",
+  "levelNote": "Not every level was run for every model. Conveyor: levels 1–7 for both models. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol and levels 1–2 for DeepSeek, too few to include in the overall curve. Empty cells are not measured yet.",
   "models": [
     {
       "name": "GPT-6.1 Sol",
       "avgApiCostUsdPerEpisode": 0.131,
       "passAtKPercent": {
         "conveyor-selective-picking": {
-          "1": 83.0,
-          "3": 98.0,
+          "1": 83.4,
+          "3": 98.2,
           "5": 100.0,
-          "tasks": 5
+          "tasks": 7
         },
         "swinging-crane-hook": {
           "1": 9.2,
@@ -34,10 +34,10 @@
       "avgApiCostUsdPerEpisode": 0.101,
       "passAtKPercent": {
         "conveyor-selective-picking": {
-          "1": 32.0,
-          "3": 68.5,
-          "5": 86.7,
-          "tasks": 5
+          "1": 38.0,
+          "3": 74.8,
+          "5": 90.5,
+          "tasks": 7
         },
         "swinging-crane-hook": null,
         "robot-aerial-handoff": null,
