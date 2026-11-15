@@ -1,26 +1,30 @@
 {
   "dummy": false,
-  "levelNote": "Not every level was run for every model. Conveyor: levels 1–7 for both models. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol, levels 1–2 for DeepSeek. Empty cells are not measured yet.",
+  "levelNote": "Not every level was run for every model. Conveyor: the gate-qualified levels 1 and 3–6 for both models. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol and levels 1–2 for DeepSeek, too few to include in the overall curve. Empty cells are not measured yet.",
   "models": [
     {
       "name": "GPT-6.1 Sol",
       "avgApiCostUsdPerEpisode": 0.131,
       "passAtKPercent": {
         "conveyor-selective-picking": {
-          "1": 83.4,
-          "3": 98.2,
-          "5": 100.0
+          "1": 83.0,
+          "3": 98.0,
+          "5": 100.0,
+          "tasks": 5
         },
         "swinging-crane-hook": {
           "1": 9.2,
           "3": 24.8,
-          "5": 35.0
+          "5": 35.0,
+          "tasks": 5
         },
         "robot-aerial-handoff": null,
         "tilting-marble-maze": {
           "1": 5.0,
           "3": 15.0,
-          "5": 25.0
+          "5": 25.0,
+          "tasks": 1,
+          "overall": false
         },
         "pinball-flipper-control": null
       }
@@ -30,16 +34,19 @@
       "avgApiCostUsdPerEpisode": 0.101,
       "passAtKPercent": {
         "conveyor-selective-picking": {
-          "1": 38.0,
-          "3": 74.8,
-          "5": 90.5
+          "1": 32.0,
+          "3": 68.5,
+          "5": 86.7,
+          "tasks": 5
         },
         "swinging-crane-hook": null,
         "robot-aerial-handoff": null,
         "tilting-marble-maze": {
           "1": 10.0,
-          "3": 26.3,
-          "5": 37.5
+          "3": 26.2,
+          "5": 37.5,
+          "tasks": 2,
+          "overall": false
         },
         "pinball-flipper-control": null
       }
