@@ -1,0 +1,261 @@
+{
+  "dataset": "https://huggingface.co/datasets/semioz/kinetic-gym-tasks",
+  "revision": "67d70717a1134c33bd6b8538c477cab493088768",
+  "families": [
+    {
+      "id": "conveyor-selective-picking",
+      "name": "Conveyor picking",
+      "video": {
+        "src": "/kinetic-gym/conveyor-sol-l1.mp4",
+        "poster": "/kinetic-gym/conveyor-sol-poster.png",
+        "caption": "GPT-6.1 Sol solving level 1 on an unseen seed · replayed from its realtime action log, closer camera"
+      },
+      "tasks": [
+        {
+          "id": "conveyor-selective-picking-l1",
+          "title": "Color-only picking",
+          "description": "Pick only the requested color of well-separated cubes from a slowly moving conveyor and place them into one target bin. Leave other objects on the belt."
+        },
+        {
+          "id": "conveyor-selective-picking-l2",
+          "title": "Faster conveyor",
+          "description": "Select the requested color while the conveyor moves faster and the reachable picking window is shorter."
+        },
+        {
+          "id": "conveyor-selective-picking-l3",
+          "title": "Denser object stream",
+          "description": "Pick target-colored objects when targets and distractors arrive closer together."
+        },
+        {
+          "id": "conveyor-selective-picking-l4",
+          "title": "Color and shape selection",
+          "description": "Pick objects satisfying a color-and-shape rule, such as red cubes but not red cylinders or blue cubes."
+        },
+        {
+          "id": "conveyor-selective-picking-l5",
+          "title": "Size-based selection",
+          "description": "Pick objects matching a stated color and size criterion while similar-looking distractors continue past the robot."
+        },
+        {
+          "id": "conveyor-selective-picking-l6",
+          "title": "Instruction-conditioned selection",
+          "description": "Choose objects according to an explicit combination of visible properties that changes between episodes, not during an episode."
+        },
+        {
+          "id": "conveyor-selective-picking-l7",
+          "title": "Multiple destination bins",
+          "description": "Sort selected object categories into their specified bins, such as red objects into one bin and blue objects into another, while ignoring other objects."
+        },
+        {
+          "id": "conveyor-selective-picking-l8",
+          "title": "Combined timing and visual ambiguity",
+          "description": "Combine validated faster motion, denser arrivals and genuine object occlusion with an explicit visual selection rule."
+        }
+      ]
+    },
+    {
+      "id": "swinging-crane-hook",
+      "name": "Crane hook",
+      "video": {
+        "src": "/kinetic-gym/crane-reference.mp4",
+        "poster": "/kinetic-gym/crane-poster.png",
+        "caption": "Reference demo · gate-qualified level 1, not a solver rollout"
+      },
+      "tasks": [
+        {
+          "id": "swinging-crane-hook-l1",
+          "title": "Swinging crane hook capture",
+          "description": "Capture an independently swinging crane hook with a robot gripper, guide it through a load eye, and establish stable support without excessive impacts."
+        },
+        {
+          "id": "swinging-crane-hook-l2",
+          "title": "Larger hook swing",
+          "description": "Increase the hook's initial swing amplitude within a validated release range while keeping the suspension, robot and load eye unchanged."
+        },
+        {
+          "id": "swinging-crane-hook-l3",
+          "title": "Different swing phase",
+          "description": "Start the same-amplitude hook swing at different physically consistent combinations of angle and angular velocity, so the robot must observe its approach rather than reuse one capture time."
+        },
+        {
+          "id": "swinging-crane-hook-l4",
+          "title": "Out-of-plane hook swing",
+          "description": "Introduce an initial swing with motion in more than one spatial plane, requiring the gripper to intercept a three-dimensional approach."
+        },
+        {
+          "id": "swinging-crane-hook-l5",
+          "title": "Offset or rotated load eye",
+          "description": "Place the load eye at different reachable positions and orientations, so a captured hook must be guided into a changed engagement pose."
+        },
+        {
+          "id": "swinging-crane-hook-l6",
+          "title": "Hook orientation and twist",
+          "description": "Vary the initial orientation or torsional state of an asymmetric hook so engagement requires aligning the hook with the load eye."
+        },
+        {
+          "id": "swinging-crane-hook-l7",
+          "title": "Bounded disturbance during capture",
+          "description": "Apply a bounded owner-side disturbance through an explicitly modeled physical force while the hook swings, without giving the solver control of that disturbance."
+        },
+        {
+          "id": "swinging-crane-hook-l8",
+          "title": "Combined swing and engagement variation",
+          "description": "Combine individually validated swing amplitude, phase, hook orientation and load-eye placement variations in one capture-and-engagement episode."
+        }
+      ]
+    },
+    {
+      "id": "robot-aerial-handoff",
+      "name": "Humanoid step-and-catch",
+      "video": {
+        "src": "/kinetic-gym/humanoid-reference.mp4",
+        "poster": "/kinetic-gym/humanoid-poster.png",
+        "caption": "Reference demo · level 1, side throw · rejected by the gate (3 of 13), not a solver rollout"
+      },
+      "tasks": [
+        {
+          "id": "robot-aerial-handoff-l1",
+          "title": "Humanoid step-and-catch pilot",
+          "description": "An independently actuated donor arm physically throws a rigid package; a free-base humanoid must take a feasible step, catch it and remain balanced while retaining it."
+        },
+        {
+          "id": "robot-aerial-handoff-l2",
+          "title": "Humanoid catch at different receiving offsets",
+          "description": "Vary validated physical donor throws toward different reachable receiving locations, requiring the humanoid to choose a useful step direction and coordinate its arms with its changing support."
+        },
+        {
+          "id": "robot-aerial-handoff-l3",
+          "title": "Humanoid catch with different flight times",
+          "description": "Vary validated donor actuation to produce different flight times and arrival speeds, requiring the humanoid to coordinate its step, hand interception and impact recovery."
+        },
+        {
+          "id": "robot-aerial-handoff-l4",
+          "title": "Humanoid catch of a spinning package",
+          "description": "Use physically attainable donor release orientations and spins so the stepping humanoid must align its grasp and manage the resulting contact while balancing."
+        },
+        {
+          "id": "robot-aerial-handoff-l5",
+          "title": "Humanoid catch with uncertain release timing",
+          "description": "Vary when the donor physically begins its throw within a declared window, requiring the humanoid to maintain readiness and use visible cues to time stepping and interception."
+        },
+        {
+          "id": "robot-aerial-handoff-l6",
+          "title": "Humanoid catch from different starting stances",
+          "description": "Reset the humanoid to different legal, initially supportable foot placements and whole-body joint configurations before a nominal throw, changing its preparation and stepping strategy."
+        },
+        {
+          "id": "robot-aerial-handoff-l7",
+          "title": "Humanoid catch with qualified package loads",
+          "description": "Use prequalified package mass and inertia profiles with the same external geometry, requiring the humanoid to absorb different incoming momentum and stabilize the retained load."
+        },
+        {
+          "id": "robot-aerial-handoff-l8",
+          "title": "Combined humanoid step-and-catch variation",
+          "description": "Combine individually validated throw offsets, release timing, package spin/load and humanoid starting stances while retaining physical stepping, catching and post-impact balance requirements."
+        }
+      ]
+    },
+    {
+      "id": "tilting-marble-maze",
+      "name": "Marble maze",
+      "video": {
+        "src": "/kinetic-gym/marble-maze-reference.mp4",
+        "poster": "/kinetic-gym/marble-maze-poster.png",
+        "caption": "Reference demo · gate-qualified level 1, not a solver rollout"
+      },
+      "tasks": [
+        {
+          "id": "tilting-marble-maze-l1",
+          "title": "Tilting marble maze with moving gates",
+          "description": "Tilt a maze board to guide a rolling marble through independently moving gates into its assigned hole, without losing it through other openings."
+        },
+        {
+          "id": "tilting-marble-maze-l2",
+          "title": "Different marble starting areas",
+          "description": "Reset the marble in different reachable starting regions of the same maze while retaining the same target hole and gate mechanism."
+        },
+        {
+          "id": "tilting-marble-maze-l3",
+          "title": "Different gate phase",
+          "description": "Start the independently actuated gate at different physically consistent phases of its existing motion, changing when the marble can pass."
+        },
+        {
+          "id": "tilting-marble-maze-l4",
+          "title": "Different gate cycle speeds",
+          "description": "Vary the gate's validated actuator drive rate so passage windows change while its geometry, mass and contact settings remain fixed."
+        },
+        {
+          "id": "tilting-marble-maze-l5",
+          "title": "Initial rolling momentum",
+          "description": "Start the marble with different physically valid rolling states, requiring the controller to brake or redirect existing momentum rather than begin from rest."
+        },
+        {
+          "id": "tilting-marble-maze-l6",
+          "title": "Two-marble coordination",
+          "description": "Place two identical qualified marbles in the maze and require both to reach permitted destination holes, so one board tilt affects two interacting objects."
+        },
+        {
+          "id": "tilting-marble-maze-l7",
+          "title": "Color-conditioned destinations",
+          "description": "Route multiple colored marbles to explicitly assigned existing destination holes, with the color-to-hole mapping fixed and visible before the episode starts."
+        },
+        {
+          "id": "tilting-marble-maze-l8",
+          "title": "Combined gate and multi-marble variation",
+          "description": "Combine validated starting regions, rolling momentum, gate phases/rates and multi-marble destination rules while the same board actuators control all marbles."
+        }
+      ]
+    },
+    {
+      "id": "pinball-flipper-control",
+      "name": "Pinball",
+      "video": {
+        "src": "/kinetic-gym/pinball-reference.mp4",
+        "poster": "/kinetic-gym/pinball-poster.png",
+        "caption": "Reference demo · level 4 · rejected by the gate: camera-free policies solved it every time"
+      },
+      "tasks": [
+        {
+          "id": "pinball-flipper-control-l1",
+          "title": "Vision-only pinball target sequence",
+          "description": "Control two flippers to direct a moving ball into visible targets in a requested order before it drains from the table."
+        },
+        {
+          "id": "pinball-flipper-control-l2",
+          "title": "Variable physical serve",
+          "description": "Vary validated initial launch conditions or plunger drive settings so the ball enters play along different physically generated approaches."
+        },
+        {
+          "id": "pinball-flipper-control-l3",
+          "title": "Different target orders",
+          "description": "Ask for different explicit orders of hits on the table's existing reachable targets, requiring changes in shot selection rather than new mechanics."
+        },
+        {
+          "id": "pinball-flipper-control-l4",
+          "title": "Longer target sequences",
+          "description": "Require longer sequences involving existing targets, including physically separate revisits where feasible, before the ball drains."
+        },
+        {
+          "id": "pinball-flipper-control-l5",
+          "title": "Higher-energy serve",
+          "description": "Use higher but validated physical launcher energy to create faster incoming motion and different rebound timing without changing gravity or the flippers."
+        },
+        {
+          "id": "pinball-flipper-control-l6",
+          "title": "Asymmetric flipper starts",
+          "description": "Reset the two flippers to different legal angles before a nominal serve, requiring the controller to recover a useful interception configuration."
+        },
+        {
+          "id": "pinball-flipper-control-l7",
+          "title": "Controlled finish after target hits",
+          "description": "After completing a short target sequence, physically settle or cradle the ball in a declared reachable flipper region for a finite interval instead of immediately losing it."
+        },
+        {
+          "id": "pinball-flipper-control-l8",
+          "title": "Combined serve and target variation",
+          "description": "Combine validated serve conditions, flipper start poses and target sequences, with an explicitly declared controlled-finish requirement only where separately qualified."
+        }
+      ]
+    }
+  ]
+}

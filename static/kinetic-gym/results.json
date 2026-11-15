@@ -1,0 +1,48 @@
+{
+  "dummy": false,
+  "levelNote": "Not every level was run for every model. Conveyor: levels 1–7 for both models. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol, levels 1–2 for DeepSeek. Empty cells are not measured yet.",
+  "models": [
+    {
+      "name": "GPT-6.1 Sol",
+      "avgApiCostUsdPerEpisode": 0.131,
+      "passAtKPercent": {
+        "conveyor-selective-picking": {
+          "1": 83.4,
+          "3": 98.2,
+          "5": 100.0
+        },
+        "swinging-crane-hook": {
+          "1": 9.2,
+          "3": 24.8,
+          "5": 35.0
+        },
+        "robot-aerial-handoff": null,
+        "tilting-marble-maze": {
+          "1": 5.0,
+          "3": 15.0,
+          "5": 25.0
+        },
+        "pinball-flipper-control": null
+      }
+    },
+    {
+      "name": "DeepSeek V4.1 Flash",
+      "avgApiCostUsdPerEpisode": 0.101,
+      "passAtKPercent": {
+        "conveyor-selective-picking": {
+          "1": 38.0,
+          "3": 74.8,
+          "5": 90.5
+        },
+        "swinging-crane-hook": null,
+        "robot-aerial-handoff": null,
+        "tilting-marble-maze": {
+          "1": 10.0,
+          "3": 26.3,
+          "5": 37.5
+        },
+        "pinball-flipper-control": null
+      }
+    }
+  ]
+}
