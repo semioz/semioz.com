@@ -213,6 +213,8 @@ function validatePasskResults(results) {
       if (tasks !== undefined && (!Number.isInteger(tasks) || tasks < 1)) {
         throw new TypeError(`${model.name}, ${family.name}: tasks must be a positive integer.`);
       }
+      const overall = model.passAtKPercent[family.id]?.overall;
+      if (overall !== undefined && typeof overall !== "boolean") throw new TypeError(`${model.name}, ${family.name}: overall must be a boolean.`);
       const rates = [1, 3, 5].map((k) => model.passAtKPercent[family.id]?.[k]);
       if (rates.some((rate) => typeof rate !== "number" || !Number.isFinite(rate) || rate < 0 || rate > 100)) {
         throw new TypeError(`${model.name}, ${family.name}: percentages must be finite numbers from 0 to 100.`);
@@ -226,7 +228,8 @@ function validatePasskResults(results) {
 }
 
 function sharedFamilies(results) {
-  return workshopCatalog.families.filter((family) => results.models.every((model) => model.passAtKPercent[family.id] !== null));
+  // overall: false keeps a family in the heatmap but out of the overall curve (too few levels measured).
+  return workshopCatalog.families.filter((family) => results.models.every((model) => model.passAtKPercent[family.id] !== null && model.passAtKPercent[family.id].overall !== false));
 }
 
 export function renderPasskResults(results) {
@@ -256,7 +259,7 @@ export function renderPasskResults(results) {
   </div>`).join("");
   return `<section class="passk-results" id="model-results" data-passk-results aria-label="Model pass@k comparison">
     <figure class="passk-card"><figcaption id="passk-overall-title"><h3>Overall pass@k</h3><span class="passk-tag">Evaluation · held-out test seeds</span></figcaption>
-      <p class="passk-chart-note" id="passk-overall-desc">Success (%) versus independent attempts, k, over ${escapeHtml(shared.map((family) => family.name).join(", "))}: the families every model was measured on, weighted by measured tasks.</p>
+      <p class="passk-chart-note" id="passk-overall-desc">Success (%) versus independent attempts, k, over ${escapeHtml(shared.map((family) => family.name).join(", "))}: the families every model was measured on across several levels, weighted by measured tasks.</p>
       <div class="passk-legend" role="group" aria-label="Highlight a model">${legend}</div>
       <div class="passk-chart" role="img" aria-labelledby="passk-overall-title" aria-describedby="passk-overall-desc">
         <div class="passk-y-ticks" aria-hidden="true">${[100, 75, 50, 25, 0].map((rate) => `<span style="top:${100 - rate}%">${rate}</span>`).join("")}</div>

@@ -470,6 +470,23 @@ test("pass@k marks unmeasured families and averages only families every model ha
   assert.throws(() => renderPasskResults(results), /tasks/);
 });
 
+test("pass@k keeps a family marked overall: false in the heatmap but out of the overall curve", async () => {
+  const { renderPasskResults } = await import("../scripts/build.js");
+  const results = await passkFixture();
+  results.models = results.models.slice(0, 2);
+  for (const model of results.models) {
+    for (const id of Object.keys(model.passAtKPercent)) model.passAtKPercent[id] = null;
+    model.passAtKPercent["conveyor-selective-picking"] = { 1: 50, 3: 60, 5: 70, tasks: 5 };
+    model.passAtKPercent["tilting-marble-maze"] = { 1: 0, 3: 0, 5: 0, tasks: 1, overall: false };
+  }
+  const html = renderPasskResults(results);
+  assert.match(html, /<title>Sol: pass@1 50\.0%, pass@3 60\.0%, pass@5 70\.0%<\/title>/);
+  assert.match(html, /over Conveyor picking:/);
+  assert.equal((html.match(/data-passk-score=/g) || []).length, 3 * 2 * 2);
+  results.models[0].passAtKPercent["tilting-marble-maze"].overall = "no";
+  assert.throws(() => renderPasskResults(results), /overall must be a boolean/);
+});
+
 test("API episode costs reject invalid or missing values and preserve zero as a real value", async () => {
   const { renderPasskResults } = await import("../scripts/build.js");
   const fixture = await passkFixture();
