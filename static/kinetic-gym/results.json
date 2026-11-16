@@ -1,6 +1,6 @@
 {
   "dummy": false,
-  "levelNote": "Not every level was run for every model. Conveyor: levels 1–8 for GPT-6.1 Sol and levels 1–7 for DeepSeek. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol and levels 1–2 for DeepSeek, too few to include in the overall curve. Empty cells are not measured yet.",
+  "levelNote": "Not every level was run for every model. Crane hook: levels 1–5, GPT-6.1 Sol only. Marble maze: level 1 for GPT-6.1 Sol and levels 1–2 for DeepSeek, too few to include in the overall curve. Empty cells are not measured yet.",
   "models": [
     {
       "name": "GPT-6.1 Sol",

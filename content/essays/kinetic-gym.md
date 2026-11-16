@@ -175,7 +175,7 @@ I’ve grouped the [task-request catalog](https://huggingface.co/datasets/semioz
 
 What each family contributes to the charts below:
 
-- **Conveyor picking:** levels 1–7 for both models. Level 8 first failed the gate because the reference controller solved only 11 of 20 seeds, so I had it rebuilt. The new version passed with 19 of 20. GPT-6.1 Sol solved 13 of 19 scored episodes on it and every seed at least once; DeepSeek isn't measured on the new level 8 yet.
+- **Conveyor picking:** on level 8, GPT-6.1 Sol solved 13 of 19 scored episodes and every seed at least once. DeepSeek isn't measured on level 8 yet.
 - **Crane hook:** levels 1–5, GPT-6.1 Sol only. All 8 levels passed the gate; levels 6–8 are not measured yet. 
 - **Humanoid step-and-catch:** not measured
 - **Marble maze:** levels 1–5 passed the gate. GPT-6.1 Sol is measured on level 1 only, DeepSeek on levels 1–2.
