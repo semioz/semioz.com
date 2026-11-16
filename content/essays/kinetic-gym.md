@@ -19,7 +19,7 @@ I use [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) as the har
 
 All models run with reasoning effort set to high and Prime Agent's default RLM max depth of 2. Solvers get 100 turns, 600k tokens and 30 minutes per episode. Workshop roles use the same settings, but a run is bounded by money and time ($25 and 4 hours) instead of turns.
 
-This is the main interface harnesses have through `robot.py`:
+These are the low-level calls in `robot.py`:
 
 ```python
 robot.spec()          # Task instruction, action bounds, cameras, sensors and timing.
@@ -31,7 +31,7 @@ robot.act(action)     # Replace the held action at the next control tick.
 
 Before `start()`, the agent can inspect the scene and prepare its code while physics is frozen. After that, physics keeps running independently of these calls. The interface does not expose privileged object positions or reference solutions.
 
-For continuous control, the agent can define a Python `act(obs)` function and execute it with the provided `run_controller.py`. The runner starts the episode and calls that function at the task’s control rate, passing `t`, `tick`, `task`, `sensors`, the latest `images` and their capture times in `image_t`. The function returns an action, or `None` to keep the previous one.
+In practice the agent doesn't send actions one by one from its turns. It writes a controller, an `act(obs)` function in `solution.py`, and runs it with the provided `run_controller.py`. The runner starts the episode and calls that function at the task’s control rate, passing `t`, `tick`, `task`, `sensors`, the latest `images` and their capture times in `image_t`. The function returns an action, or `None` to keep the previous one. So the program runs at the control rate, and it can keep its own plan or action queue and change it as new frames come in.
 
 ## Building simulations with Workshop
 
