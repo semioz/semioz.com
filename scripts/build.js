@@ -299,20 +299,17 @@ function renderRealtimeDemo() {
       <text class="rt-window-label" x="${x((window[0] + window[1]) / 2)}" y="${y + 62}" text-anchor="middle">catch window</text>
     </g>`;
   const ticks = [0, 1, 2, 3, 4].map((t) => `<line class="rt-tick" x1="${x(t)}" x2="${x(t)}" y1="30" y2="214"/><text class="rt-axis" x="${x(t)}" y="230" text-anchor="middle">${t} s</text>`).join("");
-  return `<figure class="rt-demo" data-realtime-demo data-rt-span="${SPAN}" data-rt-x0="${X0}" data-rt-x1="${X1}">
+  return `<figure class="rt-demo">
     <svg viewBox="0 0 720 240" role="img" aria-label="Timing of one catch. Turn-based: the world pauses during 3 seconds of reasoning, so the catch window comes after the arms move and the box is caught. Realtime: the world keeps running, the catch window closes at 1.3 seconds and the box falls before the first action at 3.4 seconds.">
       <defs><pattern id="rt-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
       ${ticks}
       ${row("wait", 52, "Turn-based", "the world waits", (y) => `${bar("rt-run", 0, 0.4, y)}${bar("rt-paused", 0.4, 3.4, y, "paused")}${bar("rt-run", 3.4, SPAN, y)}`, [4.0, 4.3])}
       ${row("live", 146, "Realtime", "the world keeps moving", (y) => bar("rt-run", 0, SPAN, y), [1.0, 1.3])}
-      <rect class="rt-future" data-rt-future x="${X0}" y="26" width="${X1 - X0 + 8}" height="192"/>
-      <text class="rt-outcome rt-ok" data-rt-outcome="4.0" x="${X1 - 10}" y="38" text-anchor="end">caught at 4.0 s</text>
-      <text class="rt-outcome rt-miss" data-rt-outcome="1.6" x="${X1 - 10}" y="132" text-anchor="end">dropped at 1.6 s, first action at 3.4 s</text>
-      <g data-rt-playhead><line class="rt-playhead" x1="${X0}" x2="${X0}" y1="26" y2="218"/><text class="rt-clock" data-rt-clock x="${X0}" y="20" text-anchor="middle">0.0 s</text></g>
+      <text class="rt-outcome rt-ok" x="${X1 - 10}" y="38" text-anchor="end">caught at 4.0 s</text>
+      <text class="rt-outcome rt-miss" x="${X1 - 10}" y="132" text-anchor="end">dropped at 1.6 s, first action at 3.4 s</text>
     </svg>
     <figcaption>Same model, same plan, same 3 s of reasoning. In a turn-based world the clock stops while the model thinks, so the catch window is still ahead when the arms move. In realtime it closes during the reasoning. KineticGym runs the second.</figcaption>
-  </figure>
-  <script src="/kinetic-gym/realtime.js" defer></script>`;
+  </figure>`;
 }
 
 const TRACE_LOGOS = { DeepSeek: "/kinetic-gym/logos/deepseek.svg" };

@@ -273,7 +273,6 @@ h1 {
 .rt-demo .rt-sub { fill: var(--soft); font-size: 11px; font-weight: 400; }
 .rt-demo .rt-in { fill: var(--bg); font-size: 9.5px; }
 .rt-demo .rt-axis, .rt-demo .rt-window-label { font-size: 9px; }
-.rt-demo .rt-clock { fill: var(--strong); font-size: 9.5px; }
 .rt-tick { stroke: var(--line-soft); stroke-dasharray: 2 4; }
 .rt-observe { fill: var(--line); }
 .rt-think { fill: var(--link); }
@@ -283,12 +282,9 @@ h1 {
 .rt-demo .rt-paused + .rt-in { fill: var(--soft); }
 #rt-hatch line { stroke: var(--line); stroke-width: 2; }
 .rt-window { fill: none; stroke: var(--strong); stroke-dasharray: 3 2; stroke-width: 1.2; }
-.rt-future { fill: var(--bg); opacity: .78; }
 /* On phones the figure keeps a readable size and scrolls sideways. */
 @media (max-width: 720px) { .rt-demo { overflow-x: auto; } .rt-demo svg { min-width: 640px; } .rt-demo figcaption { position: sticky; left: 0; } }
-.rt-playhead { stroke: var(--strong); stroke-width: 1.2; }
-.rt-demo .rt-outcome { font-size: 10.5px; font-weight: 600; opacity: 0; transition: opacity .3s; }
-.rt-demo .rt-outcome.is-shown { opacity: 1; }
+.rt-demo .rt-outcome { font-size: 10.5px; font-weight: 600; }
 .rt-demo .rt-ok { fill: #4f9a62; }
 .rt-demo .rt-miss { fill: #d0533f; }
 .workshop-architecture { left: 50%; margin: 2.5rem 0 3rem; position: relative; transform: translateX(-50%); width: min(1240px, calc(100vw - 48px)); }

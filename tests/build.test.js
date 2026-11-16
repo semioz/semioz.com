@@ -507,12 +507,11 @@ test("trace blocks render a header, thought bubbles and tool calls in order", ()
   assert.doesNotMatch(html, /<pre>/);
 });
 
-test("realtime demo embeds a two-row timing figure and its script", () => {
+test("realtime demo embeds a static two-row timing figure", () => {
   const html = renderMarkdown("[[realtime-demo]]");
   assert.match(html, /data-rt-mode="wait"[\s\S]*data-rt-mode="live"/);
-  assert.equal((html.match(/data-rt-outcome=/g) || []).length, 2);
-  assert.match(html, /data-rt-playhead/);
-  assert.match(html, /<script src="\/kinetic-gym\/realtime\.js" defer><\/script>/);
+  assert.equal((html.match(/class="rt-outcome /g) || []).length, 2);
+  assert.doesNotMatch(html, /<script|data-rt-playhead/);
 });
 
 test("workshop architecture is inlined as a themed SVG with flowing arrows", () => {
