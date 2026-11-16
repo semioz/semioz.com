@@ -17,6 +17,8 @@ Most of the work I’ve seen online was robots doing static tasks, where the obj
 
 I use [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) as the harness for the solver evaluations. It gives each model a shell in which it can write and run Python programs. These programs access camera images, robot sensors and controls through `robot.py`, and the agent can build its own helpers and controllers.
 
+All models run with reasoning effort set to high and Prime Agent's default RLM max depth of 2. Solvers get 100 turns, 600k tokens and 30 minutes per episode. Workshop roles use the same settings, but a run is bounded by money and time ($25 and 4 hours) instead of turns.
+
 This is the main interface harnesses have through `robot.py`:
 
 ```python
