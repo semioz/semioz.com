@@ -15,7 +15,7 @@ Here's how the pieces fit together:
 
 [[pipeline]]
 
-- **Tasks** come in families that I generate with [Workshop](/essays/kinetic-gym-workshop/). Each family has 8 difficulty levels, and a seed picks the exact scene within a level.
+- **Tasks** come in families that I generate with [Workshop](/blog/kinetic-gym-workshop/). Each family has 8 difficulty levels, and a seed picks the exact scene within a level.
 - **The gate** runs every level on seeds no agent has seen. Only levels that pass it are used for evaluation ([Where the tasks come from](#section-3)).
 - **The agent** gets a shell through Prime Agent and writes a controller that drives the robot ([Giving coding agents control](#section-1)).
 - **The simulator** runs MuJoCo in realtime in the same sandbox, out of the agent's reach, and decides at the end of the episode whether the task was solved.
@@ -55,7 +55,7 @@ Most of what the agents learn comes from those practice runs. On its first rehea
 
 ## Where the tasks come from
 
-The task families are generated with Workshop and checked by an owner-controlled gate before evaluation. I cover the generation pipeline, blind-policy checks and review process in [Generating Robotics Tasks with KineticGym Workshop](/essays/kinetic-gym-workshop/).
+The task families are generated with Workshop and checked by an owner-controlled gate before evaluation. I cover the generation pipeline, blind-policy checks and review process in [Generating Robotics Tasks with KineticGym Workshop](/blog/kinetic-gym-workshop/).
 
 ## What DeepSeek tried as a solver
 

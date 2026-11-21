@@ -170,7 +170,7 @@ function renderTaskGallery() {
   return `<section class="task-gallery" id="task-families" data-task-gallery aria-label="KineticGym task examples">
     <noscript><p>Enable JavaScript for looping previews.</p></noscript>
     <div class="task-gallery-grid">${cards}</div>
-    <p class="task-gallery-help">See the <a href="/essays/kinetic-gym-workshop/">Workshop post</a> for the detailed level-by-level catalog.</p>
+    <p class="task-gallery-help">See the <a href="/blog/kinetic-gym-workshop/">Workshop post</a> for the detailed level-by-level catalog.</p>
   </section>
   <script src="/kinetic-gym/gallery.js" defer></script>`;
 }
@@ -454,7 +454,7 @@ export async function buildSite({ rootDir = process.cwd(), outDir = join(rootDir
   await writeFile(join(outDir, "search-index.json"), JSON.stringify(publishedPosts.map((post) => ({
     title: post.title,
     description: post.description,
-    url: `/essays/${encodeURIComponent(post.slug)}/`,
+    url: `/blog/${encodeURIComponent(post.slug)}/`,
     text: post.body,
   }))));
 
@@ -462,7 +462,9 @@ export async function buildSite({ rootDir = process.cwd(), outDir = join(rootDir
   await writePage(join(outDir, "writing", "index.html"), renderWriting(publishedPosts, stylesheet));
 
   for (const post of resolvedPosts) {
-    await writePage(join(outDir, "essays", post.slug, "index.html"), renderPost(post, stylesheet));
+    await writePage(join(outDir, "blog", post.slug, "index.html"), renderPost(post, stylesheet));
+    // Posts used to live under /essays/; keep those links working.
+    await writePage(join(outDir, "essays", post.slug, "index.html"), renderRedirect(`/blog/${post.slug}/`));
   }
 }
 
@@ -555,7 +557,7 @@ function renderPostRows(posts) {
   return posts
     .map((post) => {
       const topic = post.topics[0] || "essay";
-      return `<a class="post-row" href="/essays/${post.slug}/">
+      return `<a class="post-row" href="/blog/${post.slug}/">
   <span class="post-main">
     <span class="post-title">${escapeHtml(post.title)}</span>
     ${post.description ? `<span class="post-description">${escapeHtml(post.description)}</span>` : ""}
@@ -710,6 +712,19 @@ async function listMarkdownFiles(dir) {
     if (error.code === "ENOENT") return [];
     throw error;
   }
+}
+
+function renderRedirect(url) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting…</title>
+  <link rel="canonical" href="${url}">
+  <meta http-equiv="refresh" content="0; url=${url}">
+</head>
+<body><a href="${url}">${url}</a></body>
+</html>`;
 }
 
 async function writePage(filePath, html) {

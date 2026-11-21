@@ -80,7 +80,7 @@ test("articles generate Contents from Markdown headings and retain wide images",
   ].join("\n\n"));
   await writeFile(join(root, "content", "essays", "plain.md"), "A post without headings.");
   await buildSite({ rootDir: root, outDir: join(root, "public") });
-  const post = await readFile(join(root, "public", "essays", "post", "index.html"), "utf8");
+  const post = await readFile(join(root, "public", "blog", "post", "index.html"), "utf8");
   const toc = post.match(/<nav aria-label="Contents">([\s\S]*?)<\/nav>/)?.[1];
   assert.ok(toc);
   assert.equal((toc.match(/<a /g) || []).length, 3);
@@ -94,7 +94,7 @@ test("articles generate Contents from Markdown headings and retain wide images",
   assert.match(post, /<img src="\/wide\.png" alt="Wide" class="diagram">/);
   assert.match(post, /<details class="article-toc" data-article-toc open>/);
   assert.match(post, /<script src="\/contents\.js" defer><\/script>/);
-  for (const path of ["index.html", "writing/index.html", "essays/plain/index.html"]) {
+  for (const path of ["index.html", "writing/index.html", "blog/plain/index.html"]) {
     assert.doesNotMatch(await readFile(join(root, "public", path), "utf8"), /data-article-toc|src="\/contents\.js"/);
   }
 });
@@ -158,7 +158,9 @@ Post body.
   await buildSite({ rootDir: root, outDir: join(root, "public") });
 
   const index = await readFile(join(root, "public", "index.html"), "utf8");
-  const post = await readFile(join(root, "public", "essays", "first-post", "index.html"), "utf8");
+  const post = await readFile(join(root, "public", "blog", "first-post", "index.html"), "utf8");
+  const oldLink = await readFile(join(root, "public", "essays", "first-post", "index.html"), "utf8");
+  assert.match(oldLink, /http-equiv="refresh" content="0; url=\/blog\/first-post\/"/);
   const writing = await readFile(join(root, "public", "writing", "index.html"), "utf8");
   const asset = await readFile(join(root, "public", "first.png"), "utf8");
   const cname = await readFile(join(root, "public", "CNAME"), "utf8");
@@ -177,7 +179,7 @@ Post body.
   }
   assert.match(index, /localStorage\.setItem\("theme"/);
   assert.match(index, /<section class="section-heading"><span class="section-index">RECENT WRITINGS<\/span><\/section>/);
-  assert.match(index, /href="\/essays\/first-post\/"/);
+  assert.match(index, /href="\/blog\/first-post\/"/);
   assert.match(index, /aug 13, 2025/);
   assert.match(post, /Post body/);
   assert.match(index, /I’m Semih Berkay Ozturk, a software engineer focused on RL\/post-training and distributed systems/);
@@ -187,7 +189,7 @@ Post body.
   assert.ok(favicon);
   assert.match(decodeURIComponent(favicon[1]), /👾/);
   assert.doesNotMatch(index, /href="\/favicon\.svg"/);
-  assert.match(writing, /href="\/essays\/first-post\/"/);
+  assert.match(writing, /href="\/blog\/first-post\/"/);
   assert.match(writing, /← semioz\.com/);
   assert.doesNotMatch(writing, /home-intro/);
   await assert.rejects(access(join(root, "public", "about")));
@@ -224,8 +226,8 @@ Unpublished body.
   const index = await readFile(join(root, "public", "index.html"), "utf8");
   const writing = await readFile(join(root, "public", "writing", "index.html"), "utf8");
   const search = await readFile(join(root, "public", "search-index.json"), "utf8");
-  const draft = await readFile(join(root, "public", "essays", "unpublished", "index.html"), "utf8");
-  const published = await readFile(join(root, "public", "essays", "published", "index.html"), "utf8");
+  const draft = await readFile(join(root, "public", "blog", "unpublished", "index.html"), "utf8");
+  const published = await readFile(join(root, "public", "blog", "published", "index.html"), "utf8");
 
   assert.match(index, /1 posts · updated january 2025/);
   for (const page of [index, writing, search]) {
@@ -288,7 +290,7 @@ test("built pages version the stylesheet by its content so old CSS cannot style 
   const first = await cssUrl();
   assert.match(first, /^\/styles\.css\?v=[a-f0-9]{12}$/);
   assert.equal(await cssUrl("writing/index.html"), first);
-  assert.equal(await cssUrl("essays/post/index.html"), first);
+  assert.equal(await cssUrl("blog/post/index.html"), first);
   await buildSite({ rootDir: root, outDir });
   assert.equal(await cssUrl(), first);
   await writeFile(cssPath, "body { color: blue; }");
@@ -575,7 +577,7 @@ test("Workshop post stands alone while KineticGym retains its solver traces and 
   const workshop = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym-workshop.md"));
   assert.equal(main.draft, true);
   assert.equal(workshop.draft, true);
-  assert.match(main.html, /href="\/essays\/kinetic-gym-workshop\/"/);
+  assert.match(main.html, /href="\/blog\/kinetic-gym-workshop\/"/);
   assert.doesNotMatch(main.html, /class="workshop-architecture"|What can go wrong/);
   assert.match(main.html, /What DeepSeek tried as a solver/);
   assert.match(main.html, /44 of 145 evaluation episodes/);
@@ -591,7 +593,7 @@ test("Workshop post stands alone while KineticGym retains its solver traces and 
   assert.ok(workshop.html.indexOf("The task catalog") < workshop.html.indexOf("data-workshop-showcase"));
   assert.ok(workshop.html.indexOf('class="workshop-architecture"') < workshop.html.indexOf("The task catalog"));
   assert.ok(workshop.html.indexOf("data-workshop-showcase") < workshop.html.indexOf("What can go wrong"));
-  assert.doesNotMatch(workshop.html, /What DeepSeek tried as a solver|data-passk-results|href="\/essays\/kinetic-gym\/"/);
+  assert.doesNotMatch(workshop.html, /What DeepSeek tried as a solver|data-passk-results|href="\/blog\/kinetic-gym\/"/);
 });
 
 test("workshop architecture is inlined as a themed SVG with flowing arrows", () => {
