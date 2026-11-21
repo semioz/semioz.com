@@ -75,7 +75,7 @@ export function renderMarkdown(markdown) {
       continue;
     }
 
-    const embed = { "[[workshop-showcase]]": renderWorkshopShowcase, "[[passk-results]]": () => renderPasskResults(passkResults), "[[realtime-demo]]": renderRealtimeDemo, "[[workshop-architecture]]": renderWorkshopArchitecture }[line.trim()];
+    const embed = { "[[workshop-showcase]]": renderWorkshopShowcase, "[[task-gallery]]": renderTaskGallery, "[[passk-results]]": () => renderPasskResults(passkResults), "[[workshop-architecture]]": renderWorkshopArchitecture, "[[pipeline]]": renderPipeline, "[[seed-examples]]": renderSeedExamples, "[[conveyor-levels]]": renderConveyorLevels, "[[marble-blind]]": renderMarbleBlind }[line.trim()];
     if (embed) {
       flushParagraph();
       flushList();
@@ -152,6 +152,29 @@ export function renderMarkdown(markdown) {
   return `${blocks.join("\n")}\n`;
 }
 
+function renderTaskGallery() {
+  const cards = workshopCatalog.families.map((family, index) => {
+    const { src, poster, caption } = family.video;
+    return `<figure class="task-gallery-card">
+      <button type="button" class="task-gallery-motion" data-gallery-motion aria-label="Animate ${escapeAttr(family.name)} preview" aria-pressed="false" disabled>
+        <video muted loop playsinline preload="none" poster="${escapeAttr(poster)}" data-video-src="${escapeAttr(src)}" aria-hidden="true"></video>
+      </button>
+      <figcaption>
+        <div class="task-gallery-heading"><span aria-hidden="true">${String(index + 1).padStart(2, "0")}</span><h3>${escapeHtml(family.name)}</h3><span class="task-gallery-levels">${family.tasks.length} catalog levels</span></div>
+        <p class="task-gallery-description">${escapeHtml(family.tasks[0].description)}</p>
+        <p class="task-gallery-credit">${escapeHtml(caption)}</p>
+        <p class="task-gallery-error" data-gallery-error hidden>Preview unavailable. <a href="${escapeAttr(src)}">Open the recording</a>.</p>
+      </figcaption>
+    </figure>`;
+  }).join("\n");
+  return `<section class="task-gallery" id="task-families" data-task-gallery aria-label="KineticGym task examples">
+    <noscript><p>Enable JavaScript for looping previews.</p></noscript>
+    <div class="task-gallery-grid">${cards}</div>
+    <p class="task-gallery-help">See the <a href="/essays/kinetic-gym-workshop/">Workshop post</a> for the detailed level-by-level catalog.</p>
+  </section>
+  <script src="/kinetic-gym/gallery.js" defer></script>`;
+}
+
 function renderWorkshopShowcase() {
   const { families, dataset, revision } = workshopCatalog;
   const pad = (n) => String(n).padStart(2, "0");
@@ -199,7 +222,8 @@ function validatePasskResults(results) {
   const familyIds = new Set(families.map((family) => family.id));
   for (const model of results.models) {
     const cost = model.avgApiCostUsdPerEpisode;
-    if (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0) {
+    const unmeasured = families.every((family) => model.passAtKPercent?.[family.id] === null);
+    if (!(unmeasured && cost === null) && (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0)) {
       throw new TypeError(`${model.name}: average API cost must be a finite, non-negative USD amount per episode.`);
     }
     const ids = Object.keys(model.passAtKPercent || {});
@@ -224,32 +248,38 @@ function validatePasskResults(results) {
       }
     }
   }
-  if (!sharedFamilies(results).length) throw new TypeError("At least one family must be measured for every model.");
+  if (!curveFamilies(results).length) throw new TypeError("At least one family needs a pass@k curve.");
 }
 
-function sharedFamilies(results) {
-  // overall: false keeps a family in the heatmap but out of the overall curve (too few levels measured).
-  return workshopCatalog.families.filter((family) => results.models.every((model) => model.passAtKPercent[family.id] !== null && model.passAtKPercent[family.id].overall !== false));
+// Families get their own curve chart, never an average across families: rates differ too much between them for a mean
+// to say anything. overall: false keeps a family in the heatmap only (too few levels measured).
+function curveFamilies(results) {
+  return workshopCatalog.families.filter((family) => results.models.some((model) => model.passAtKPercent[family.id] && model.passAtKPercent[family.id].overall !== false));
 }
 
 export function renderPasskResults(results) {
   validatePasskResults(results);
   const { families } = workshopCatalog;
   const ks = [1, 3, 5];
-  // Overall rates compare like with like: only families every model was measured on, weighted by measured tasks.
-  const shared = sharedFamilies(results);
-  const weight = (model, family) => model.passAtKPercent[family.id].tasks ?? family.tasks.length;
   const percent = (rate) => `${rate.toFixed(1)}%`;
-  const means = results.models.map((model) => ks.map((k) => shared.reduce((sum, family) => sum + model.passAtKPercent[family.id][k] * weight(model, family), 0) / shared.reduce((sum, family) => sum + weight(model, family), 0)));
   const legend = results.models.map((model, index) => `<button type="button" class="passk-legend-item passk-series-${index}" data-passk-focus="${index}"><i aria-hidden="true"></i>${escapeHtml(model.name)}</button>`).join("");
   const grid = [0, 25, 50, 75, 100].map((rate) => `<line x1="0" x2="600" y1="${260 * (1 - rate / 100)}" y2="${260 * (1 - rate / 100)}" vector-effect="non-scaling-stroke"/>`).join("");
-  const curves = means.map((rates, index) => {
-    const coordinates = rates.map((rate, kIndex) => `${kIndex * 300},${(260 * (1 - rate / 100)).toFixed(3)}`).join(" ");
-    return `<g class="passk-series-${index}" data-passk-focus="${index}"><title>${escapeHtml(results.models[index].name)}: ${rates.map((rate, i) => `pass@${ks[i]} ${percent(rate)}`).join(", ")}</title><polyline class="passk-hit" points="${coordinates}" vector-effect="non-scaling-stroke"/><polyline data-passk-series="${index}" points="${coordinates}" vector-effect="non-scaling-stroke"/></g>`;
-  }).join("");
-  const points = means.map((rates, index) => rates.map((rate, kIndex) => `<span class="passk-point passk-series-${index}" data-passk-point="${index}-${ks[kIndex]}" data-passk-focus="${index}" style="left:${kIndex * 50}%;top:${100 - rate}%;--k:${kIndex}" title="${escapeAttr(`${results.models[index].name} · pass@${ks[kIndex]}: ${percent(rate)}`)}" aria-hidden="true"></span>`).join("")).join("");
-  const tabs = ks.map((k) => `<button type="button" role="tab" id="passk-tab-${k}" aria-controls="passk-heatmap-${k}" aria-selected="${k === 5}" tabindex="${k === 5 ? 0 : -1}" data-passk-select="${k}">pass@${k}</button>`).join("");
-  const heatmaps = ks.map((k) => `<div role="tabpanel" id="passk-heatmap-${k}" aria-labelledby="passk-tab-${k}" data-passk-heatmap="${k}" tabindex="0"${k === 5 ? "" : " hidden"}>
+  const chart = (family) => {
+    const measured = results.models.map((model, index) => ({ model, index, entry: model.passAtKPercent[family.id] })).filter(({ entry }) => entry);
+    const curves = measured.map(({ model, index, entry }) => {
+      const coordinates = ks.map((k, kIndex) => `${kIndex * 300},${(260 * (1 - entry[k] / 100)).toFixed(3)}`).join(" ");
+      return `<g class="passk-series-${index}" data-passk-focus="${index}"><title>${escapeHtml(model.name)}: ${ks.map((k) => `pass@${k} ${percent(entry[k])}`).join(", ")}</title><polyline class="passk-hit" points="${coordinates}" vector-effect="non-scaling-stroke"/><polyline data-passk-series="${index}" points="${coordinates}" vector-effect="non-scaling-stroke"/></g>`;
+    }).join("");
+    const points = measured.map(({ model, index, entry }) => ks.map((k, kIndex) => `<button type="button" class="passk-point passk-series-${index}" data-passk-point="${family.id}-${index}-${k}" data-passk-focus="${index}" style="left:${kIndex * 50}%;top:${100 - entry[k]}%;--k:${kIndex}" aria-label="${escapeAttr(`${family.name}, ${model.name} · pass@${k}: ${percent(entry[k])}`)}"></button>`).join("")).join("");
+    return `<div class="passk-family"><h4 id="passk-curve-${family.id}">${escapeHtml(family.name)}</h4>
+        <div class="passk-chart" role="group" aria-labelledby="passk-curve-${family.id}">
+          <div class="passk-y-ticks" aria-hidden="true">${[100, 75, 50, 25, 0].map((rate) => `<span style="top:${100 - rate}%">${rate}</span>`).join("")}</div>
+          <div class="passk-plot"><svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true">${grid}${curves}</svg>${points}</div>
+          <div class="passk-x-ticks" aria-hidden="true">${ks.map((k) => `<span>k = ${k}</span>`).join("")}</div>
+        </div></div>`;
+  };
+  const tabs = ks.map((k) => `<button type="button" role="tab" id="passk-tab-${k}" aria-controls="passk-heatmap-${k}" aria-selected="${k === 1}" tabindex="${k === 1 ? 0 : -1}" data-passk-select="${k}">pass@${k}</button>`).join("");
+  const heatmaps = ks.map((k) => `<div role="tabpanel" id="passk-heatmap-${k}" aria-labelledby="passk-tab-${k}" data-passk-heatmap="${k}" tabindex="0"${k === 1 ? "" : " hidden"}>
     <table class="passk-heatmap"><caption>pass@${k} · success by task family (%)</caption><thead><tr><th scope="col">Task family</th>${results.models.map((model, index) => `<th scope="col" class="passk-series-${index}"><span class="passk-column-key" aria-hidden="true"></span>${escapeHtml(model.name)}</th>`).join("")}</tr></thead>
     <tbody>${families.map((family, row) => `<tr><th scope="row">${escapeHtml(family.name)}</th>${results.models.map((model, column) => {
       if (model.passAtKPercent[family.id] === null) return `<td class="passk-missing" data-passk-missing title="Not measured">—</td>`;
@@ -258,18 +288,14 @@ export function renderPasskResults(results) {
     }).join("")}</tr>`).join("")}</tbody></table>
   </div>`).join("");
   return `<section class="passk-results" id="model-results" data-passk-results aria-label="Model pass@k comparison">
-    <figure class="passk-card"><figcaption id="passk-overall-title"><h3>Overall pass@k</h3><span class="passk-tag">Evaluation · held-out test seeds</span></figcaption>
-      <p class="passk-chart-note" id="passk-overall-desc">Success (%) versus independent attempts, k, over ${escapeHtml(shared.map((family) => family.name).join(", "))}: the families every model was measured on across several levels, weighted by measured tasks.</p>
+    <figure class="passk-card"><figcaption><h3>pass@k by task family</h3><span class="passk-tag">Evaluation · held-out test seeds</span></figcaption>
+      <p class="passk-chart-note">Success (%) versus independent attempts, k, averaged over the measured levels of each family. Families are not averaged together.</p>
       <div class="passk-legend" role="group" aria-label="Highlight a model">${legend}</div>
-      <div class="passk-chart" role="img" aria-labelledby="passk-overall-title" aria-describedby="passk-overall-desc">
-        <div class="passk-y-ticks" aria-hidden="true">${[100, 75, 50, 25, 0].map((rate) => `<span style="top:${100 - rate}%">${rate}</span>`).join("")}</div>
-        <div class="passk-plot"><svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true">${grid}${curves}</svg>${points}</div>
-        <div class="passk-x-ticks" aria-hidden="true">${ks.map((k) => `<span>k = ${k}</span>`).join("")}</div>
-      </div>
+      <div class="passk-families">${curveFamilies(results).map(chart).join("")}</div>
     </figure>
     <figure class="passk-card"><figcaption><h3>Success by task family</h3></figcaption>
       <div class="passk-heatmap-controls"><div class="passk-tabs" role="tablist" aria-label="Heatmap pass@k">${tabs}</div><div class="passk-scale" aria-hidden="true"><span>0%</span><i></i><span>100%</span></div></div>
-      <noscript><p>The heatmap shows pass@5. Enable JavaScript to switch k.</p></noscript>
+      <noscript><p>The heatmap shows pass@1. Enable JavaScript to switch k.</p></noscript>
       ${heatmaps}
       ${results.levelNote ? `<p class="passk-chart-note passk-footnote">${escapeHtml(results.levelNote)}</p>` : ""}
     </figure>
@@ -283,36 +309,64 @@ function renderWorkshopArchitecture() {
   return `<figure class="workshop-architecture">${svg}</figure>`;
 }
 
-function renderRealtimeDemo() {
-  // A timing figure in wall-clock seconds: the same model run against a world that waits and one that does not.
-  const SPAN = 4.6, X0 = 58, X1 = 712;
-  const x = (t) => (X0 + (t * (X1 - X0)) / SPAN).toFixed(1);
-  const w = (a, b) => ((b - a) * (X1 - X0) / SPAN).toFixed(1);
-  const bar = (cls, a, b, y, label = "") => `<rect class="${cls}" x="${x(a)}" y="${y}" width="${w(a, b)}" height="20" rx="3"/>${label ? `<text class="rt-in" x="${(Number(x(a)) + 8).toFixed(1)}" y="${y + 14}">${label}</text>` : ""}`;
-  const row = (mode, y, title, subtitle, world, window) => `<g data-rt-mode="${mode}">
-      <text class="rt-title" x="0" y="${y - 14}">${title}<tspan class="rt-sub" dx="10">${subtitle}</tspan></text>
-      <text class="rt-track" x="${X0 - 10}" y="${y + 14}" text-anchor="end">model</text>
-      ${bar("rt-observe", 0, 0.4, y)}${bar("rt-think", 0.4, 3.4, y, "reasoning · 3,200 tokens")}${bar("rt-act", 3.4, 3.8, y, "act")}
-      <text class="rt-track" x="${X0 - 10}" y="${y + 40}" text-anchor="end">world</text>
-      ${world(y + 26)}
-      <rect class="rt-window" x="${x(window[0])}" y="${y + 23}" width="${w(...window)}" height="26" rx="4"/>
-      <text class="rt-window-label" x="${x((window[0] + window[1]) / 2)}" y="${y + 62}" text-anchor="middle">catch window</text>
-    </g>`;
-  const ticks = [0, 1, 2, 3, 4].map((t) => `<line class="rt-tick" x1="${x(t)}" x2="${x(t)}" y1="30" y2="214"/><text class="rt-axis" x="${x(t)}" y="230" text-anchor="middle">${t} s</text>`).join("");
-  return `<figure class="rt-demo" data-realtime-demo data-rt-span="${SPAN}" data-rt-x0="${X0}" data-rt-x1="${X1}">
-    <svg viewBox="0 0 720 240" role="img" aria-label="Timing of one catch. Turn-based: the world pauses during 3 seconds of reasoning, so the catch window comes after the arms move and the box is caught. Realtime: the world keeps running, the catch window closes at 1.3 seconds and the box falls before the first action at 3.4 seconds.">
-      <defs><pattern id="rt-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6"/></pattern></defs>
-      ${ticks}
-      ${row("wait", 52, "Turn-based", "the world waits", (y) => `${bar("rt-run", 0, 0.4, y)}${bar("rt-paused", 0.4, 3.4, y, "paused")}${bar("rt-run", 3.4, SPAN, y)}`, [4.0, 4.3])}
-      ${row("live", 146, "Realtime", "the world keeps moving", (y) => bar("rt-run", 0, SPAN, y), [1.0, 1.3])}
-      <rect class="rt-future" data-rt-future x="${X0}" y="26" width="${X1 - X0 + 8}" height="192"/>
-      <text class="rt-outcome rt-ok" data-rt-outcome="4.0" x="${X1 - 10}" y="38" text-anchor="end">caught at 4.0 s</text>
-      <text class="rt-outcome rt-miss" data-rt-outcome="1.6" x="${X1 - 10}" y="132" text-anchor="end">dropped at 1.6 s, first action at 3.4 s</text>
-      <g data-rt-playhead><line class="rt-playhead" x1="${X0}" x2="${X0}" y1="26" y2="218"/><text class="rt-clock" data-rt-clock x="${X0}" y="20" text-anchor="middle">0.0 s</text></g>
-    </svg>
-    <figcaption>Same model, same plan, same 3 s of reasoning. In a turn-based world the clock stops while the model thinks, so the catch window is still ahead when the arms move. In realtime it closes during the reasoning. KineticGym runs the second.</figcaption>
-  </figure>
-  <script src="/kinetic-gym/realtime.js" defer></script>`;
+const SEED_EXAMPLES = [
+  { clip: "l1-s2000000", title: "Level 1 · test seed 1", detail: "Yellow cubes, 4th and 8th, into bin A" },
+  { clip: "l1-s2000001", title: "Level 1 · test seed 2", detail: "Blue cubes, 8th and 11th, into bin A" },
+  { clip: "l8-s2000000", title: "Level 8 · test seed 1", detail: "Small blue cubes into A, large yellow cubes into B" },
+];
+
+function renderSeedExamples() {
+  const panels = SEED_EXAMPLES.map(({ clip, title, detail }) => `<figure class="seed-example">
+      <video autoplay muted loop playsinline preload="metadata" poster="/kinetic-gym/seeds/${clip}.jpg" src="/kinetic-gym/seeds/${clip}.mp4" aria-label="${escapeAttr(`${title}: ${detail}`)}"></video>
+      <figcaption><strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span></figcaption>
+    </figure>`).join("\n");
+  return `<figure class="seed-examples">
+    <div class="seed-example-grid">${panels}</div>
+  </figure>`;
+}
+
+// Conveyor picking's level ladder, copied from LEVELS in the family's sampler (conveyor-v2).
+const CONVEYOR_LEVELS = [
+  { level: 1, objects: 12, speed: [0.055, 0.065], spacing: [1.4, 2.2], rule: ["colour"], bins: 1 },
+  { level: 2, objects: 12, speed: [0.075, 0.09], spacing: [1.4, 2.2], rule: ["colour"], bins: 1 },
+  { level: 3, objects: 14, speed: [0.06, 0.075], spacing: [1.0, 1.5], rule: ["colour"], bins: 1 },
+  { level: 4, objects: 12, speed: [0.06, 0.075], spacing: [1.3, 1.9], rule: ["colour", "shape"], bins: 1 },
+  { level: 5, objects: 12, speed: [0.06, 0.075], spacing: [1.3, 1.9], rule: ["colour", "size"], bins: 1 },
+  { level: 6, objects: 13, speed: [0.06, 0.078], spacing: [1.2, 1.7], rule: ["colour", "shape", "size"], bins: 1 },
+  { level: 7, objects: 14, speed: [0.06, 0.078], spacing: [1.1, 1.6], rule: ["colour"], bins: 2 },
+  { level: 8, objects: 16, speed: [0.075, 0.09], spacing: [0.85, 1.25], rule: ["colour", "shape", "size"], bins: 2 },
+];
+
+function renderConveyorLevels() {
+  const range = ([low, high], [min, max], digits, unit) => {
+    const left = ((low - min) / (max - min)) * 100;
+    const width = ((high - low) / (max - min)) * 100;
+    return `<div class="cl-range"><div class="cl-track"><span style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%"></span></div><small>${low.toFixed(digits)}–${high.toFixed(digits)}<span class="cl-unit"> ${unit}</span></small></div>`;
+  };
+  const rows = CONVEYOR_LEVELS.filter(({ level }) => [1, 2, 4, 8].includes(level)).map(({ level, speed, spacing, rule, bins }) => `<li class="cl-row">
+      <span class="cl-level">L${level}</span>
+      <span class="cl-cell" data-label="Belt speed">${range(speed, [0.05, 0.095], 3, "m/s")}</span>
+      <span class="cl-cell" data-label="Gap">${range(spacing, [0.8, 2.3], 2, "s")}</span>
+      <span class="cl-cell cl-rule" data-label="Rule">${rule.map((part) => `<b>${part}</b>`).join("")}${bins > 1 ? `<b class="cl-bins">${bins} bins</b>` : ""}</span>
+    </li>`).join("\n");
+  return `<figure class="conveyor-levels">
+    <ol class="cl-grid">
+      <li class="cl-row cl-head" aria-hidden="true"><span>Level</span><span>Belt speed<span class="cl-head-unit"> (m/s)</span></span><span><span class="cl-head-long">Time between objects</span><span class="cl-head-short">Gap (s)</span></span><span>Rule</span></li>
+      ${rows}
+    </ol>
+  </figure>`;
+}
+
+function renderMarbleBlind() {
+  return `<figure class="blind-clip">
+    <video autoplay muted loop playsinline preload="metadata" poster="/kinetic-gym/marble-blind.jpg" src="/kinetic-gym/marble-blind.mp4" aria-label="DeepSeek's camera-free policy steering the marble into the red hole"></video>
+    <figcaption>Cameras off. DeepSeek's <code>servo_load.py</code> steers the marble into the red hole using only the board's joint angles. Rerun on level 1, seed 9001001, which it also solved at the gate.</figcaption>
+  </figure>`;
+}
+
+function renderPipeline() {
+  const svg = readFileSync(new URL("../static/kinetic-gym/pipeline.svg", import.meta.url), "utf8");
+  return `<figure class="kg-pipeline">${svg}</figure>`;
 }
 
 const TRACE_LOGOS = { DeepSeek: "/kinetic-gym/logos/deepseek.svg" };

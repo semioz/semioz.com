@@ -1,13 +1,13 @@
 {
   "dataset": "https://huggingface.co/datasets/semioz/kinetic-gym-tasks",
-  "revision": "67d70717a1134c33bd6b8538c477cab493088768",
+  "revision": "f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78",
   "families": [
     {
       "id": "conveyor-selective-picking",
       "name": "Conveyor picking",
       "video": {
-        "src": "/kinetic-gym/conveyor-sol-l1.mp4",
-        "poster": "/kinetic-gym/conveyor-sol-poster.png",
+        "src": "/kinetic-gym/conveyor-sol-l1-hd.mp4",
+        "poster": "/kinetic-gym/conveyor-sol-hd-poster.png",
         "caption": "GPT-6.1 Sol solving level 1 on an unseen seed · replayed from its realtime action log, closer camera"
       },
       "tasks": [
@@ -59,7 +59,7 @@
       "video": {
         "src": "/kinetic-gym/crane-reference.mp4",
         "poster": "/kinetic-gym/crane-poster.png",
-        "caption": "Reference demo · gate-qualified level 1, not a solver rollout"
+        "caption": "Reference demo · level 8 · passed the gate (18 of 20), not a solver rollout"
       },
       "tasks": [
         {
@@ -106,52 +106,52 @@
     },
     {
       "id": "robot-aerial-handoff",
-      "name": "Humanoid step-and-catch",
+      "name": "Humanoid goalkeeper",
       "video": {
         "src": "/kinetic-gym/humanoid-reference.mp4",
         "poster": "/kinetic-gym/humanoid-poster.png",
-        "caption": "Reference demo · level 1, side throw · rejected by the gate (3 of 13), not a solver rollout"
+        "caption": "Reference demo · level 1, goalkeeper · passed the gate (20 of 20), not a solver rollout"
       },
       "tasks": [
         {
           "id": "robot-aerial-handoff-l1",
-          "title": "Humanoid step-and-catch pilot",
-          "description": "An independently actuated donor arm physically throws a rigid package; a free-base humanoid must take a feasible step, catch it and remain balanced while retaining it."
+          "title": "Humanoid goalkeeper",
+          "description": "A standing Unitree G1 in front of a goal must save three shots from three catapults with its hands, one at a time, seeing the balls only through two fixed cameras."
         },
         {
           "id": "robot-aerial-handoff-l2",
-          "title": "Humanoid catch at different receiving offsets",
-          "description": "Vary validated physical donor throws toward different reachable receiving locations, requiring the humanoid to choose a useful step direction and coordinate its arms with its changing support."
+          "title": "Goalkeeper with quick follow-up shots",
+          "description": "The same three shots come 1.0-1.5 s apart, so the keeper must recover from one save and be ready for the next."
         },
         {
           "id": "robot-aerial-handoff-l3",
-          "title": "Humanoid catch with different flight times",
-          "description": "Vary validated donor actuation to produce different flight times and arrival speeds, requiring the humanoid to coordinate its step, hand interception and impact recovery."
+          "title": "Goalkeeper against close catapults",
+          "description": "The catapults stand 3.55-3.75 m away instead of 4.15-4.45 m, so each ball is in the air for about 0.6 s instead of 0.8 s."
         },
         {
           "id": "robot-aerial-handoff-l4",
-          "title": "Humanoid catch of a spinning package",
-          "description": "Use physically attainable donor release orientations and spins so the stepping humanoid must align its grasp and manage the resulting contact while balancing."
+          "title": "Goalkeeper with shots to the edge of reach",
+          "description": "Every ball is aimed at the edge of what a hand can reach, so the arm must fully extend."
         },
         {
           "id": "robot-aerial-handoff-l5",
-          "title": "Humanoid catch with uncertain release timing",
-          "description": "Vary when the donor physically begins its throw within a declared window, requiring the humanoid to maintain readiness and use visible cues to time stepping and interception."
+          "title": "Goalkeeper against simultaneous shots",
+          "description": "From this level the solver commands the 14 arm joints instead of two hand targets and must write its own inverse kinematics. Two catapults fire within 0.08 s of each other and the third follows."
         },
         {
           "id": "robot-aerial-handoff-l6",
-          "title": "Humanoid catch from different starting stances",
-          "description": "Reset the humanoid to different legal, initially supportable foot placements and whole-body joint configurations before a nominal throw, changing its preparation and stepping strategy."
+          "title": "Goalkeeper with colour selection",
+          "description": "The ball colours are shuffled between the catapults and one colour must be let through: no part of the robot may touch it."
         },
         {
           "id": "robot-aerial-handoff-l7",
-          "title": "Humanoid catch with qualified package loads",
-          "description": "Use prequalified package mass and inertia profiles with the same external geometry, requiring the humanoid to absorb different incoming momentum and stabilize the retained load."
+          "title": "Colour selection with simultaneous shots",
+          "description": "Colour selection, two shots at once and every ball aimed at the edge of reach."
         },
         {
           "id": "robot-aerial-handoff-l8",
-          "title": "Combined humanoid step-and-catch variation",
-          "description": "Combine individually validated throw offsets, release timing, package spin/load and humanoid starting stances while retaining physical stepping, catching and post-impact balance requirements."
+          "title": "Combined goalkeeper challenge",
+          "description": "Colour selection, two shots at once and every ball aimed at the edge of reach, with only 0.6-0.9 s between shots."
         }
       ]
     },
@@ -161,7 +161,7 @@
       "video": {
         "src": "/kinetic-gym/marble-maze-reference.mp4",
         "poster": "/kinetic-gym/marble-maze-poster.png",
-        "caption": "Reference demo · gate-qualified level 1, not a solver rollout"
+        "caption": "Reference demo · level 8 · passed the gate (19 of 20), not a solver rollout"
       },
       "tasks": [
         {
@@ -212,7 +212,7 @@
       "video": {
         "src": "/kinetic-gym/pinball-reference.mp4",
         "poster": "/kinetic-gym/pinball-poster.png",
-        "caption": "Reference demo · level 4 · rejected by the gate: camera-free policies solved it every time"
+        "caption": "Reference demo · level 4 · passed the gate (20 of 20), not a solver rollout"
       },
       "tasks": [
         {
