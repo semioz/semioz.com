@@ -1,6 +1,7 @@
 ---
 title: "KineticGym: Controlling Robots While the World Keeps Moving"
 description: "Can coding agents control robots while physics keeps running, and get better through reinforcement learning?"
+image: /kinetic-gym/conveyor-sol-hd-poster.png
 draft: true
 topics:
   - robotics
