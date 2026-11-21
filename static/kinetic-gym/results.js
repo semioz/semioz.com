@@ -6,6 +6,7 @@
   const models = [...root.querySelectorAll("[data-passk-focus]")];
 
   function focusModel(event) {
+    if (event.type === "pointerenter" || event.type === "focus") event.currentTarget.removeAttribute("data-tooltip-dismissed");
     const keyboard = root.querySelector("button[data-passk-focus]:focus-visible");
     const hovered = root.querySelector("[data-passk-focus]:hover");
     const current = event.type === "focus" && keyboard ? keyboard : hovered || keyboard;
@@ -33,6 +34,12 @@
     });
     if (focus) tab.focus();
   }
+
+  root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      root.querySelectorAll("[data-passk-point]").forEach((point) => point.setAttribute("data-tooltip-dismissed", ""));
+    }
+  });
 
   root.addEventListener("click", (event) => {
     const tab = event.target.closest("[data-passk-select]");

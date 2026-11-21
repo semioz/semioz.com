@@ -307,7 +307,7 @@ test("workshop embed starts with Conveyor and renders five families including th
   assert.equal((html.match(/data-workshop-task=/g) || []).length, 40);
   assert.equal((html.match(/<video\b/g) || []).length, 5);
   assert.equal((html.match(/Video coming soon/g) || []).length, 0);
-  assert.match(html, /Humanoid step-and-catch/);
+  assert.match(html, /Humanoid goalkeeper/);
   assert.doesNotMatch(html, /moving-platform/i);
   assert.doesNotMatch(html, /Reference demo|not a solver rollout|Family preview/);
   assert.match(html, /<script src="\/kinetic-gym\/showcase\.js" defer><\/script>/);
@@ -323,7 +323,7 @@ test("workshop catalog pins its source, keeps eight unique tasks per family and 
   for (const id of ["robot-aerial-handoff"]) {
     const family = catalog.families.find((family) => family.id === id);
     assert.ok(family);
-    assert.match(family.tasks[0].description, /free-base humanoid/);
+    assert.match(family.tasks[0].description, /Unitree G1 in front of a goal/);
   }
   assert.equal(catalog.families[0].id, "conveyor-selective-picking");
   assert.ok(catalog.families.every((family) => !family.id.includes("tower")));
@@ -367,27 +367,50 @@ test("performance figures stack at a capped width with transparent backgrounds",
 test("pass@k embed renders curves and three family heatmaps without disclaimer badges", () => {
   const html = renderMarkdown("[[passk-results]]");
   assert.match(html, /id="model-results"/);
-  assert.equal((html.match(/data-passk-series=/g) || []).length, 2);
-  assert.equal((html.match(/data-passk-point=/g) || []).length, 6);
+  assert.equal((html.match(/class="passk-family"/g) || []).length, 5);
+  assert.equal((html.match(/data-passk-series=/g) || []).length, 10);
+  assert.equal((html.match(/data-passk-point=/g) || []).length, 30);
+  assert.doesNotMatch(html, /Overall pass@k/);
   assert.equal((html.match(/data-passk-heatmap=/g) || []).length, 3);
-  assert.equal((html.match(/data-passk-score=/g) || []).length, 15);
+  assert.match(html, /id="passk-tab-1"[^>]*aria-selected="true" tabindex="0"/);
+  assert.match(html, /data-passk-heatmap="1" tabindex="0">/);
+  assert.match(html, /data-passk-heatmap="3" tabindex="0" hidden>/);
+  assert.match(html, /data-passk-heatmap="5" tabindex="0" hidden>/);
+  assert.match(html, /The heatmap shows pass@1\./);
+  assert.equal((html.match(/data-passk-score=/g) || []).length, 30);
   assert.equal((html.match(/data-passk-missing/g) || []).length, 15);
   assert.doesNotMatch(html, /tower/i);
   assert.doesNotMatch(html, /data-dummy-label|Dummy data — not measured/);
   assert.doesNotMatch(html, /passk-intro|These charts use illustrative placeholder values/);
   assert.match(html, /GPT-6\.1 Sol/);
   assert.match(html, /DeepSeek V4\.1 Flash/);
+  assert.match(html, /Gemini Carbon/);
+  assert.doesNotMatch(html, /<title>Gemini Carbon:/);
   assert.doesNotMatch(renderMarkdown("```text\n[[passk-results]]\n```"), /id="model-results"/);
 });
 
-test("overall pass@k exposes hover and keyboard focus targets without toggle state", () => {
+test("pass@k curves expose hover and keyboard focus targets without toggle state", () => {
   const html = renderMarkdown("[[passk-results]]");
-  assert.equal((html.match(/<button[^>]*data-passk-focus=/g) || []).length, 2);
+  assert.equal((html.match(/<button[^>]*data-passk-focus=/g) || []).length, 3 + 30);
   assert.doesNotMatch(html, /aria-pressed=/);
-  assert.equal((html.match(/<g[^>]*data-passk-focus=/g) || []).length, 2);
-  assert.equal((html.match(/class="passk-hit"/g) || []).length, 2);
-  assert.equal((html.match(/data-passk-focus=/g) || []).length, 10);
+  assert.equal((html.match(/<g[^>]*data-passk-focus=/g) || []).length, 10);
+  assert.equal((html.match(/class="passk-hit"/g) || []).length, 10);
+  assert.equal((html.match(/data-passk-focus=/g) || []).length, 3 + 30 + 10);
   assert.match(html, /class="passk-legend" role="group" aria-label="Highlight a model"/);
+});
+
+test("pass@k points show exact, accessible scores on hover and keyboard focus", async () => {
+  const { renderPasskResults } = await import("../scripts/build.js");
+  const html = renderPasskResults(await passkFixture());
+  const points = html.match(/<button\b[^>]*data-passk-point=[^>]*><\/button>/g) || [];
+  assert.equal(points.length, 5 * 5 * 3);
+  assert.match(points[0], /type="button"/);
+  assert.match(points[0], /aria-label="Conveyor picking, Sol · pass@1: 20\.0%"/);
+  assert.doesNotMatch(points.join(""), /aria-hidden|\btitle=/);
+  assert.match(html, /class="passk-chart" role="group"/);
+  const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(css, /\.passk-point::after\s*\{[^}]*content:\s*attr\(aria-label\)/s);
+  assert.match(css, /\.passk-point:not\(\[data-tooltip-dismissed\]\):is\(:hover, :focus-visible\)::after/);
 });
 
 async function passkFixture() {
@@ -402,13 +425,14 @@ async function passkFixture() {
   };
 }
 
-test("pass@k overall values are derived from family rates, with no dummy label for measured data", async () => {
+test("pass@k curves show each family's own rates, with no dummy label for measured data", async () => {
   const { renderPasskResults } = await import("../scripts/build.js");
   assert.equal(typeof renderPasskResults, "function");
   const results = await passkFixture();
   results.models[0].passAtKPercent["conveyor-selective-picking"] = { 1: 90, 3: 95, 5: 100 };
   const html = renderPasskResults(results);
-  assert.match(html, /<title>Sol: pass@1 34\.0%, pass@3 51\.0%, pass@5 68\.0%<\/title>/);
+  assert.match(html, /<title>Sol: pass@1 90\.0%, pass@3 95\.0%, pass@5 100\.0%<\/title>/);
+  assert.doesNotMatch(html, /pass@1 34\.0%/);
   assert.doesNotMatch(html, /Show exact values|class="passk-values"|data-passk-overall/);
   assert.match(html, /class="passk-heatmap"/);
   results.dummy = false;
@@ -449,7 +473,7 @@ test("pass@k rendering rejects missing families, invalid percentages and decreas
   }
 });
 
-test("pass@k marks unmeasured families and averages only families every model has", async () => {
+test("pass@k marks unmeasured families and draws only the models measured on each family", async () => {
   const { renderPasskResults } = await import("../scripts/build.js");
   const results = await passkFixture();
   results.models = results.models.slice(0, 2);
@@ -463,14 +487,17 @@ test("pass@k marks unmeasured families and averages only families every model ha
   assert.match(html, /<title>Opus: pass@1 20\.0%, pass@3 40\.0%, pass@5 60\.0%<\/title>/);
   const families = Object.keys(results.models[0].passAtKPercent).length;
   assert.equal((html.match(/data-passk-missing/g) || []).length, 3 * (2 * families - 3));
-  assert.match(html, /over Conveyor picking:/);
-  for (const model of results.models) model.passAtKPercent["conveyor-selective-picking"] = null;
-  assert.throws(() => renderPasskResults(results), /every model/);
+  const crane = html.split('id="passk-curve-swinging-crane-hook"')[1].split('class="passk-family"')[0];
+  assert.equal((crane.match(/data-passk-series=/g) || []).length, 1);
+  assert.doesNotMatch(html, /passk-family-levels|Opus 12 levels/);
+  for (const model of results.models) for (const id of Object.keys(model.passAtKPercent)) model.passAtKPercent[id] = null;
+  assert.throws(() => renderPasskResults(results), /curve/);
+  results.models[0].passAtKPercent["conveyor-selective-picking"] = { 1: 10, 3: 10, 5: 10, tasks: 1 };
   results.models[0].passAtKPercent["swinging-crane-hook"] = { 1: 10, 3: 10, 5: 10, tasks: 0 };
   assert.throws(() => renderPasskResults(results), /tasks/);
 });
 
-test("pass@k keeps a family marked overall: false in the heatmap but out of the overall curve", async () => {
+test("pass@k keeps a family marked overall: false in the heatmap but draws no curve for it", async () => {
   const { renderPasskResults } = await import("../scripts/build.js");
   const results = await passkFixture();
   results.models = results.models.slice(0, 2);
@@ -481,10 +508,23 @@ test("pass@k keeps a family marked overall: false in the heatmap but out of the 
   }
   const html = renderPasskResults(results);
   assert.match(html, /<title>Sol: pass@1 50\.0%, pass@3 60\.0%, pass@5 70\.0%<\/title>/);
-  assert.match(html, /over Conveyor picking:/);
+  assert.doesNotMatch(html, /id="passk-curve-tilting-marble-maze"/);
   assert.equal((html.match(/data-passk-score=/g) || []).length, 3 * 2 * 2);
   results.models[0].passAtKPercent["tilting-marble-maze"].overall = "no";
   assert.throws(() => renderPasskResults(results), /overall must be a boolean/);
+});
+
+test("pass@k allows unknown API cost for a fully unmeasured model without drawing a curve", async () => {
+  const { renderPasskResults } = await import("../scripts/build.js");
+  const fixture = await passkFixture();
+  const model = fixture.models[0];
+  model.avgApiCostUsdPerEpisode = null;
+  for (const id of Object.keys(model.passAtKPercent)) model.passAtKPercent[id] = null;
+  const html = renderPasskResults(fixture);
+  assert.equal((html.match(/data-passk-missing/g) || []).length, 15);
+  assert.doesNotMatch(html, /<title>Sol:/);
+  model.passAtKPercent["conveyor-selective-picking"] = { 1: 20, 3: 40, 5: 60 };
+  assert.throws(() => renderPasskResults(fixture), /API cost/);
 });
 
 test("API episode costs reject invalid or missing values and preserve zero as a real value", async () => {
@@ -507,12 +547,51 @@ test("trace blocks render a header, thought bubbles and tool calls in order", ()
   assert.doesNotMatch(html, /<pre>/);
 });
 
-test("realtime demo embeds a two-row timing figure and its script", () => {
-  const html = renderMarkdown("[[realtime-demo]]");
-  assert.match(html, /data-rt-mode="wait"[\s\S]*data-rt-mode="live"/);
-  assert.equal((html.match(/data-rt-outcome=/g) || []).length, 2);
-  assert.match(html, /data-rt-playhead/);
-  assert.match(html, /<script src="\/kinetic-gym\/realtime\.js" defer><\/script>/);
+test("KineticGym article omits the removed timing demo and its script", async () => {
+  const post = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym.md"));
+  assert.doesNotMatch(post.html, /data-realtime-demo|realtime\.js|Same model, same plan|\[\[realtime-demo\]\]/);
+  await assert.rejects(access(new URL("../static/kinetic-gym/realtime.js", import.meta.url)), { code: "ENOENT" });
+});
+
+test("Workshop places the marble clarification after its trace", async () => {
+  const source = await readFile(new URL("../content/essays/kinetic-gym-workshop.md", import.meta.url), "utf8");
+  assert.match(source, /turning that bend into a sensor:\n\n```trace/);
+  const traceStart = source.indexOf("```trace\nDeepSeek V4.1 Flash | marble maze");
+  const traceEnd = source.indexOf("\n```", traceStart);
+  assert.ok(source.indexOf("The marble really reached its target") > traceEnd);
+});
+
+test("Workshop distinguishes qualified snapshots, redesigns and incomplete attack campaigns", async () => {
+  const post = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym-workshop.md"));
+  assert.match(post.html, /18–20 of 20/);
+  assert.match(post.html, /3 of 13 scorable episodes/);
+  assert.match(post.html, /standing goalkeeper/);
+  assert.match(post.html, /outside Workshop, in assisted coding sessions/);
+  assert.doesNotMatch(post.html, /levels 2–8 are not implemented|not yet a qualified family|58 of 60 episodes/);
+});
+
+test("Workshop post stands alone while KineticGym retains its solver traces and results", async () => {
+  const main = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym.md"));
+  const workshop = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym-workshop.md"));
+  assert.equal(main.draft, true);
+  assert.equal(workshop.draft, true);
+  assert.match(main.html, /href="\/essays\/kinetic-gym-workshop\/"/);
+  assert.doesNotMatch(main.html, /class="workshop-architecture"|What can go wrong/);
+  assert.match(main.html, /What DeepSeek tried as a solver/);
+  assert.match(main.html, /44 of 145 evaluation episodes/);
+  assert.equal((main.html.match(/<figure class="trace">/g) || []).length, 5);
+  assert.match(main.html, /data-passk-results/);
+  assert.match(main.html, /data-task-gallery/);
+  assert.doesNotMatch(main.html, /data-workshop-showcase/);
+  assert.match(workshop.html, /class="workshop-architecture"/);
+  assert.equal((workshop.html.match(/<animateMotion/g) || []).length, 12);
+  assert.equal((workshop.html.match(/<figure class="trace">/g) || []).length, 4);
+  assert.match(workshop.html, /data-workshop-showcase/);
+  assert.ok(workshop.html.indexOf("What a task family looks like") < workshop.html.indexOf("The task catalog"));
+  assert.ok(workshop.html.indexOf("The task catalog") < workshop.html.indexOf("data-workshop-showcase"));
+  assert.ok(workshop.html.indexOf('class="workshop-architecture"') < workshop.html.indexOf("The task catalog"));
+  assert.ok(workshop.html.indexOf("data-workshop-showcase") < workshop.html.indexOf("What can go wrong"));
+  assert.doesNotMatch(workshop.html, /What DeepSeek tried as a solver|data-passk-results|href="\/essays\/kinetic-gym\/"/);
 });
 
 test("workshop architecture is inlined as a themed SVG with flowing arrows", () => {

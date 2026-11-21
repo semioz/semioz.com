@@ -1,23 +1,31 @@
 ---
-title: "KineticGym: From Controlling Robots to Building Their Worlds"
-description: "Can coding agents build their own simulations, control robots while physics keeps running, and get better through reinforcement learning?"
+title: "KineticGym: Controlling Robots While the World Keeps Moving"
+description: "Can coding agents control robots while physics keeps running, and get better through reinforcement learning?"
 draft: true
 topics:
   - robotics
   - agents
 ---
 
-As my first project at the RL Residency at [Prime Intellect](https://www.primeintellect.ai/), I’ve been building KineticGym over the past few weeks to see how well coding agents can build simulations and then solve tasks in them, without any VLAs or pretrained control policies. I also want to know whether RL can make them better at solving those tasks.
+As my first project at the RL Residency at [Prime Intellect](https://www.primeintellect.ai/), I’ve been building KineticGym over the past few weeks to see how well coding agents can solve robotics tasks while physics keeps running, without any VLAs or pretrained control policies. I also want to know whether RL can make them better at solving those tasks.
 
 Most of the work I’ve seen online was robots doing static tasks, where the objects weren’t moving. That’s why I decided to create dynamic tasks where the world doesn’t pause while the model thinks or executes code.
 
-[[realtime-demo]]
+Here's how the pieces fit together:
+
+[[pipeline]]
+
+- **Tasks** come in families that I generate with [Workshop](/essays/kinetic-gym-workshop/). Each family has 8 difficulty levels, and a seed picks the exact scene within a level.
+- **The gate** runs every level on seeds no agent has seen. Only levels that pass it are used for evaluation ([Where the tasks come from](#section-3)).
+- **The agent** gets a shell through Prime Agent and writes a controller that drives the robot ([Giving coding agents control](#section-1)).
+- **The simulator** runs MuJoCo in realtime in the same sandbox, out of the agent's reach, and decides at the end of the episode whether the task was solved.
+- **Results** are pass@k per family and level on held-out seeds ([Results](#section-6)), and the next step is RL on the conveyor family ([Next: RL](#section-7)).
 
 ## Giving coding agents control
 
 I use [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) as the harness for the solver evaluations. It gives each model a shell in which it can write and run Python programs. These programs access camera images, robot sensors and controls through `robot.py`, and the agent can build its own helpers and controllers.
 
-All models run with reasoning effort set to high and Prime Agent's default RLM max depth of 2. Solvers get 100 turns, 600k tokens and 30 minutes per episode. Workshop roles use the same settings, but a run is bounded by money and time ($25 and 4 hours) instead of turns.
+All models run with reasoning effort set to high and Prime Agent's default RLM max depth of 2. Solvers get 100 turns, 600k tokens and 30 minutes per episode.
 
 These are the low-level calls in `robot.py`:
 
@@ -26,94 +34,32 @@ robot.spec()          # Task instruction, action bounds, cameras, sensors and ti
 robot.state()         # Episode time, tick, robot sensors and status.
 robot.image(camera)   # Latest RGB frame from a named camera.
 robot.start()         # Start the realtime episode.
-robot.act(action)     # Replace the held action at the next control tick.
+robot.act(action)     # Set the command the robot applies from the next control tick on.
 ```
 
 Before `start()`, the agent can inspect the scene and prepare its code while physics is frozen. After that, physics keeps running independently of these calls. The interface does not expose privileged object positions or reference solutions.
 
-In practice the agent doesn't send actions one by one from its turns. It writes a controller, an `act(obs)` function in `solution.py`, and runs it with the provided `run_controller.py`. The runner starts the episode and calls that function at the task’s control rate, passing `t`, `tick`, `task`, `sensors`, the latest `images` and their capture times in `image_t`. The function returns an action, or `None` to keep the previous one. So the program runs at the control rate, and it can keep its own plan or action queue and change it as new frames come in.
+In practice the agent doesn't send actions one by one from its turns. It writes a controller, an `act(obs)` function in `solution.py`, and runs it with the provided `run_controller.py`. The runner starts the episode and calls that function at the task’s control rate, passing `t`, `tick`, `task`, `sensors`, the latest `images` and their capture times in `image_t`. The function returns the next action, or `None` to keep the previous one.
 
-## Building simulations with Workshop
+So the agent isn't limited to one action at a time. The controller is a normal Python program with its own state: it can keep a whole plan or a queue of future actions, and edit that queue every tick as new frames come in. The robot only applies one command per tick, the same as a real robot would.
 
-KineticGym has something called Workshop, which enables agents to build their own simulations using [MuJoCo 4](https://mujoco.org/). The main idea of it is to generate task families from high-level requests instead of us manually building every environment and its variations.
+## Rehearsals
 
-But just because they can create a running simulation doesn’t mean it’s a good task. So we need to validate the simulations in some way. That's why another agent tries to break it, and an independent Inspector reviews the physics and task implementation. There’s also an owner-controlled gate that checks whether the reference controller succeeds and whether simple camera-free policies can bypass the intended challenge. These checks don’t prove that a task has no exploits, but they help us reject bad candidates before using them.
+When we started, every run was one-shot. The agent wrote a controller, ran it once, and that was its score. Sol got 3 of 20 level-1 crane episodes this way. I read through the transcripts and the failures looked the same: Sol planned around the nominal hook size and never saw how the real hook moved.
 
-Here is the architecture of the Workshop:
+Other people have run into this too. In NVIDIA's [ASPIRE](link), agents write robot skills as code and fix them using execution traces. In [PACT](link) and [Robot-Use RL](link), the model gets to look at the world after every step. All of these let the world wait for the model. KineticGym can't do that. The physics runs in real time, so the controller has to be finished before the episode starts.
 
-[[workshop-architecture]]
+So we added rehearsals. Before the scored episode, the agent can run its controller on up to three practice seeds. These are other seeds of the same level, from a pool kept apart from the test seeds, so the agent never practises on the scene it is scored on. In the crane the hook hangs and swings differently, and in the goalkeeper the shots come at other times and to other points. After each rehearsal the agent sees whether it succeeded and why it failed, for example "robot collided with table, load block or eye" with the peak force, but it never sees the hidden parameters. Then it has to turn what it learned into a controller for a scene it hasn't seen. The scored episode still runs only once. With three rehearsals, Sol's level-1 crane score went from 15% to about 50%.
 
-Each build runs through four roles. Every role works in a fresh container and starts a new conversation, so no agent sees the reasoning of another agent.
+Most of what the agents learn comes from those practice runs. On its first rehearsal Sol solved none of 164 crane episodes. After up to three rehearsals it solved 32 scored episodes, and on level 2 it went from 0 of 19 first tries to 8 of 20. The first rehearsal isn't a fair one-shot score, since the agents often use it to try out a rough controller, but the jump comes from what they change after it.
 
-- **Architect** (Claude Sonnet 5.5 or Opus 5.5 in most builds). It reads the request, runs physical probes in MuJoCo and writes a research report. Then it builds the family: the scene, a sampler that turns a level and a seed into hidden parameters, a success check and a reference controller that uses the cameras.
-- **Adversary** (DeepSeek V4.1 Flash). It gets a copy of the candidate and tries to solve it without cameras. It can write up to six blind policies in 90 minutes.
-- **Owner gate** (no model). It runs every level on 20 seeds that no agent saw. With cameras, the reference must succeed on at least 18 of them. Without cameras, the null policy and every Adversary policy must succeed on at most one. The gate also checks for leaks and late control ticks.
-- **Inspector** (Claude Opus 5.5). It reads the gate report and checks what the gate cannot measure: physical realism, lenient success checks and missing evidence.
+## Where the tasks come from
 
-If the gate or the Inspector rejects a family, the Architect gets the findings and repairs it. A family that passes is frozen, and only its qualified levels go into RL. Evaluation results state which levels they cover.
+The task families are generated with Workshop and checked by an owner-controlled gate before evaluation. I cover the generation pipeline, blind-policy checks and review process in [Generating Robotics Tasks with KineticGym Workshop](/essays/kinetic-gym-workshop/).
 
-### Why an Adversary?
+## What DeepSeek tried as a solver
 
-A family can run, look correct and have a reference controller that succeeds, and still not measure what we want. Two different failures can happen:
-
-1. **Reward hacking.** The success check reports success, but the task did not happen. For example, a check that looks only at the gripper position and never at the cube in the bin.
-2. **Shortcuts.** The task really happens, but it does not need the skill we want to measure. For example, a catch that works with a fixed close time, so the camera is not necessary.
-
-These families test vision under time pressure, so a policy that succeeds without cameras is a warning sign for us. The Adversary looks for these policies on purpose but it doesn't decide the result. The gate runs its blind policies on the owner side with legal robot commands and the cameras switched off.
-
-### Choosing the Adversary
-
-When I ran DeepSeek V4.1 Flash as a solver, it often probed the system instead of solving the task. For example, it planned to send actions before the episode started, to calibrate the arm for free. That behaviour is a problem in a solver, but an Adversary needs exactly that behaviour. So I gave it this role on purpose.
-
-The best example is the marble maze task family. DeepSeek noticed that the servo joints of the board bend slightly under the weight of the marble, and it turned that bend into a sensor:
-
-```trace
-DeepSeek V4.1 Flash | marble maze · Adversary
-> Baseline is weak. Now the key: exploit the tilt-sensor side channel. Let me quantify the signal.
->
-> Excellent! Roll deflection ≈ -0.0260*y + 0.00074, RMSE 1e-4 rad → equivalent position error 0.0038 m = 3.8 mm. Great! The roll channel is an excellent estimator of marble y (independent of gate).
->
-> Excellent! The signal is beautiful. … So the gate's state is trivially observable: the deflection jumps by ~7.3 mrad with a clean ramp.
-```
-
-From the joint angles alone, its blind policies located the marble to within a few millimetres. The gate ran them on 20 unseen seeds per level, with the cameras switched off:
-
-```trace
-Owner gate | marble maze · blind policies, cameras off
-$ blind: servo_load.py, servo_load_early.py, servo_load_nowait.py
-= level 1: 7 of 20 episodes solved
-= level 2: 9 of 20 episodes solved
-= level 3: 3 of 20 episodes solved
-```
-
-Each result is above the limit of 1 in 20, so the gate rejected all three levels. The Architect then fixed the sensing, and the repaired family passed the gate with every blind policy at zero.
-
-Pinball failed in a different way. There was no sensor leak. The task itself did not need the camera:
-
-```trace
-DeepSeek V4.1 Flash | pinball · Adversary
-> Very interesting findings: 1. The ball ALWAYS comes to rest at exactly the same place … That's a **fixed resting spot**, independent of serve height/delay.
->
-> HUGE finding: Aim (0.5, 0.7) always hits RED, regardless of seed, exactly one hit. Aim (0.7, 0.5) always hits GREEN. Aim (0.6,0.6) and (1,1) always hit BLUE. … So the aim mapping is perfectly deterministic and seed-independent. The camera provides nothing but "ball is at tee".
-```
-
-So its blind policy read the requested order from the task text, waited for the serve and fired the matching aim. The gate confirmed it:
-
-```trace
-Owner gate | pinball · level 1 · blind policies, cameras off
-$ blind: aim_order.py
-= 20 of 20 episodes solved
-$ blind: window_edge.py
-= 20 of 20 episodes solved
-$ blind: contact_latch.py
-= 18 of 18 episodes solved
-```
-
-The reference controller also solved 20 of 20, so the family worked. It only did not measure vision. The gate rejected it.
-
-### What DeepSeek tried as a solver
-
-The same habit shows up when DeepSeek is the solver. In 44 of 145 evaluation episodes, it probed the system before or instead of writing a controller. These are examples from its traces, with what happened next:
+In 44 of 145 evaluation episodes, DeepSeek V4.1 Flash probed the system before or instead of writing a controller. These are examples from its traces, with what happened next:
 
 **Look for a hidden score endpoint.** It called routes that the interface does not document:
 
@@ -167,19 +113,19 @@ None of these attempts got past the isolation in the Prime sandbox. But each att
 
 ## Task families
 
-I’ve grouped the [task-request catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/67d70717a1134c33bd6b8538c477cab493088768) into **five families with eight tasks each**, 40 tasks in total.
+The [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78) defines **five families with eight levels each**, 40 task requests in total. These clips show individual examples, not evidence that every level is qualified.
 
-[[workshop-showcase]]
+[[task-gallery]]
 
 ## Results
 
 What each family contributes to the charts below:
 
-- **Conveyor picking:**  Level 8 is left out for now because even the reference controller solved only 11 of 20 seeds, below the gate's 90%; DeepSeek solved 0 of 19 episodes there.
-- **Crane hook:** levels 1–5, GPT-6.1 Sol only. All 8 levels passed the gate; levels 6–8 are not measured yet. 
-- **Humanoid step-and-catch:** not measured
-- **Marble maze:** levels 1–5 passed the gate. GPT-6.1 Sol is measured on level 1 only, DeepSeek on levels 1–2.
-- **Pinball:** not measured. Camera-free policies solved level 1 on 20 of 20 seeds, so the gate rejected it.
+- **Conveyor picking:** on level 8, GPT-6.1 Sol solved 13 of 19 scored episodes and DeepSeek 3 of 20.
+- **Crane hook:** GPT-6.1 Sol and DeepSeek on all 8 levels, with three rehearsals before each scored episode. GPT-6.1 Sol's level 1 went from 3 of 20 without rehearsals to about half; levels 3–6 stay at 5–11% pass@1. DeepSeek solved 3 of 160 episodes, one each on levels 2, 4 and 5. Levels 6–8 come from a separate snapshot of the family, which is why levels 7 and 8 score higher than 3–6.
+- **Humanoid goalkeeper:** both models on all 8 levels, with three rehearsals. On levels 1–4 the solver commands two hand targets and a built-in controller does the inverse kinematics; from level 5 it commands the 14 arm joints and has to write its own. GPT-6.1 Sol solved 134 of 160 scored episodes and DeepSeek 100. DeepSeek drops on levels 6–8, where one ball colour has to be let through untouched: 30–45% pass@1, against Sol's 80–90%.
+- **Marble maze:** both models on all 8 levels, with three rehearsals. GPT-6.1 Sol solved 112 of 160 scored episodes and DeepSeek 45. Both drop on levels 6–8, which put two marbles on the board: Sol from 80–95% pass@1 on levels 1–5 to 25–60%, DeepSeek from 35–50% to 0–15%.
+- **Pinball:** both models on all 8 levels, with three rehearsals. GPT-6.1 Sol solved 85 of 158 scored episodes, DeepSeek 12 of 160, 11 of them on levels 1–4. Levels 5–8 give the ball 60 s instead of 40 s, and running out of time was Sol's most common failure, which is why its level 5 and 8 scores are higher than level 4.
 
 [[passk-results]]
 
@@ -187,6 +133,6 @@ What each family contributes to the charts below:
 
 Small models start from zero: Qwen3.5 9B solved 0 of 20 episodes on conveyor level 1, also with three rehearsals, so a plain reward never fires.
 
-I'm planning to do RL on the conveyor family only, with Qwen3.5 9B. It is the easiest family so far: GPT-6.1 Sol and DeepSeek both solved episodes on every level from 1 to 7. During training a failed episode gets partial credit for reaching a selected object, lifting it and putting it in its bin, so the reward is not always zero. The benchmark score stays 0 or 1.
+I'm planning to do RL on the conveyor family only, with Qwen3.5 9B. It is the easiest family so far: GPT-6.1 Sol and DeepSeek both solved episodes on every level from 1 to 8. During training a failed episode gets partial credit for reaching a selected object, lifting it and putting it in its bin, so the reward is not always zero. The benchmark score stays 0 or 1.
 
 The other families stay out of training. I want to evaluate the trained model on them afterwards and see if what it learns on the conveyor carries over.
