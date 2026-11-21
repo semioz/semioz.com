@@ -160,6 +160,9 @@ Post body.
   const index = await readFile(join(root, "public", "index.html"), "utf8");
   const post = await readFile(join(root, "public", "blog", "first-post", "index.html"), "utf8");
   const oldLink = await readFile(join(root, "public", "essays", "first-post", "index.html"), "utf8");
+  assert.match(post, /<meta property="og:url" content="https:\/\/semioz\.com\/blog\/first-post\/">/);
+  assert.match(post, /<meta property="og:image" content="https:\/\/semioz\.com\/images\/semihport\.jpg">/);
+  assert.match(post, /<meta name="twitter:card" content="summary">/);
   assert.match(oldLink, /http-equiv="refresh" content="0; url=\/blog\/first-post\/"/);
   const writing = await readFile(join(root, "public", "writing", "index.html"), "utf8");
   const asset = await readFile(join(root, "public", "first.png"), "utf8");

@@ -1,6 +1,7 @@
 ---
 title: "Generating Robotics Tasks with KineticGym Workshop"
 description: "How coding agents build and stress-test MuJoCo task families."
+image: /kinetic-gym/seeds/l8-s2000000.jpg
 draft: true
 topics:
   - robotics

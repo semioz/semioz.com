@@ -13,6 +13,8 @@ const SITE = {
   brand: "semioz.com",
   headerBrand: "semioz",
   description: "Writing by Semih Berkay Öztürk.",
+  url: "https://semioz.com",
+  image: "/images/semihport.jpg",
 };
 
 export function renderMarkdown(markdown) {
@@ -591,6 +593,7 @@ function renderWriting(posts, stylesheet) {
     title: `writing - ${SITE.title}`,
     stylesheet,
     description: SITE.description,
+    preview: { path: "/writing/" },
     main: `<section class="post-list" aria-label="Writing">${renderPostRows(posts)}</section>`,
   });
 }
@@ -624,6 +627,7 @@ function renderPost(post, stylesheet) {
     stylesheet,
     description: post.description || SITE.description,
     noindex: post.draft,
+    preview: { title: post.title, path: `/blog/${post.slug}/`, image: post.image, type: "article" },
     main: `<article class="article">
   ${contents}
   <header class="article-header">
@@ -636,7 +640,7 @@ function renderPost(post, stylesheet) {
   });
 }
 
-function layout({ title, description, main, stylesheet = "/styles.css", noindex = false, brand = `← ${SITE.brand}` }) {
+function layout({ title, description, main, stylesheet = "/styles.css", noindex = false, brand = `← ${SITE.brand}`, preview = {} }) {
   const portrait = brand === SITE.headerBrand
     ? `<figure class="portrait-engraving" data-portrait-engraving role="img" aria-label="Engraved portrait of Semih Berkay Öztürk">
         <canvas class="portrait-engraving-canvas" aria-hidden="true"></canvas>
@@ -651,6 +655,7 @@ function layout({ title, description, main, stylesheet = "/styles.css", noindex 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${escapeAttr(description)}">
   ${noindex ? '<meta name="robots" content="noindex">' : ""}
+  ${renderPreviewMeta({ title, description, ...preview })}
   <title>${escapeHtml(title)}</title>
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
@@ -712,6 +717,24 @@ async function listMarkdownFiles(dir) {
     if (error.code === "ENOENT") return [];
     throw error;
   }
+}
+
+// Open Graph and Twitter tags, which chat apps and social sites read to build link previews.
+function renderPreviewMeta({ title, description, path = "/", image, type = "website" }) {
+  const imageUrl = new URL(image || SITE.image, SITE.url).href;
+  const tags = [
+    ["property", "og:site_name", SITE.title],
+    ["property", "og:type", type],
+    ["property", "og:title", title],
+    ["property", "og:description", description],
+    ["property", "og:url", new URL(path, SITE.url).href],
+    ["property", "og:image", imageUrl],
+    ["name", "twitter:card", image ? "summary_large_image" : "summary"],
+    ["name", "twitter:title", title],
+    ["name", "twitter:description", description],
+    ["name", "twitter:image", imageUrl],
+  ];
+  return tags.map(([key, name, value]) => `<meta ${key}="${name}" content="${escapeAttr(value)}">`).join("\n  ");
 }
 
 function renderRedirect(url) {
