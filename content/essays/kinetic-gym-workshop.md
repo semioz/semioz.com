@@ -52,6 +52,18 @@ I’ve grouped the [task catalog](https://huggingface.co/datasets/semioz/kinetic
 
 [[workshop-showcase]]
 
+## How realistic is the physics
+
+The robots come straight from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie), a library of ready-made robot models. For everything else, the Architect uses the robot maker's published specs where it can, like how far the Panda arm reaches, how much it can lift and how hard its gripper squeezes. Then it runs small tests in MuJoCo before building anything: how fast a marble rolls on a tilted board, how long the crane hook takes to swing, whether a grasp holds.
+
+- **Conveyor:** the belt is a rigid plate sliding on a joint. I only need it to carry objects at the right speed, so a flexible belt wasn't worth simulating.
+- **Crane:** the cable is a length limit that doesn't bend or twist. The hook and eye got softer contacts, so the load gets picked up smoothly when the cable goes tight.
+- **Marble maze:** the tilt sensors have encoder-like resolution and noise. I wanted that anyway, since it stops the joint angles from giving away where the marble is (more on that below).
+- **Goalkeeper:** a built-in controller keeps the G1 balanced, because I wanted the solver to focus on the arms. The physics runs in 0.25 ms steps so each tick fits in realtime.
+- **Pinball:** the table isn't modeled on a real machine. It has its own layout, flippers and targets.
+
+All of these choices are written down in each family's manifest, next to its code.
+
 ## What can go wrong
 
 Most of the families above didn't pass the gate on the first try. A family can run fine, look right and have a working reference controller, and still not measure what I want. Usually it's one of two things:
