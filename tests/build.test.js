@@ -190,7 +190,8 @@ Post body.
   assert.match(decodeURIComponent(favicon[1]), /👾/);
   assert.doesNotMatch(index, /href="\/favicon\.svg"/);
   assert.match(writing, /href="\/blog\/first-post\/"/);
-  assert.match(writing, /← semioz\.com/);
+  assert.match(writing, /<span class="brand">semioz\.com<\/span>/);
+  assert.doesNotMatch(writing, /←/);
   assert.doesNotMatch(writing, /home-intro/);
   await assert.rejects(access(join(root, "public", "about")));
   await assert.rejects(access(join(root, "public", "projects")));

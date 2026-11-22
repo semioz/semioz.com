@@ -636,7 +636,7 @@ function renderPost(post, stylesheet) {
   });
 }
 
-function layout({ title, description, main, stylesheet = "/styles.css", noindex = false, brand = `← ${SITE.brand}` }) {
+function layout({ title, description, main, stylesheet = "/styles.css", noindex = false, brand = SITE.brand }) {
   const portrait = brand === SITE.headerBrand
     ? `<figure class="portrait-engraving" data-portrait-engraving role="img" aria-label="Engraved portrait of Semih Berkay Öztürk">
         <canvas class="portrait-engraving-canvas" aria-hidden="true"></canvas>

@@ -64,7 +64,7 @@ a:hover { color: var(--strong); }
   letter-spacing: .04em;
 }
 
-.brand-lockup { align-items: center; display: inline-flex; gap: 10px; }
+.brand-lockup { align-items: center; display: inline-flex; gap: 10px; min-height: 72px; }
 
 .site-header nav {
   display: flex;
