@@ -75,7 +75,7 @@ export function renderMarkdown(markdown) {
       continue;
     }
 
-    const embed = { "[[workshop-showcase]]": renderWorkshopShowcase, "[[task-gallery]]": renderTaskGallery, "[[passk-results]]": () => renderPasskResults(passkResults), "[[workshop-architecture]]": renderWorkshopArchitecture, "[[pipeline]]": renderPipeline, "[[seed-examples]]": renderSeedExamples, "[[conveyor-levels]]": renderConveyorLevels, "[[marble-blind]]": renderMarbleBlind }[line.trim()];
+    const embed = { "[[workshop-showcase]]": renderWorkshopShowcase, "[[task-gallery]]": renderTaskGallery, "[[passk-results]]": () => renderPasskResults(passkResults), "[[workshop-architecture]]": renderWorkshopArchitecture, "[[pipeline]]": renderPipeline, "[[seed-examples]]": renderSeedExamples, "[[conveyor-levels]]": renderConveyorLevels, "[[level-ladder]]": renderLevelLadder, "[[marble-blind]]": renderMarbleBlind }[line.trim()];
     if (embed) {
       flushParagraph();
       flushList();
@@ -354,6 +354,77 @@ function renderConveyorLevels() {
       <li class="cl-row cl-head" aria-hidden="true"><span>Level</span><span>Belt speed<span class="cl-head-unit"> (m/s)</span></span><span><span class="cl-head-long">Time between objects</span><span class="cl-head-short">Gap (s)</span></span><span>Rule</span></li>
       ${rows}
     </ol>
+  </figure>`;
+}
+
+// What each level contains, per family, from the level tables in each family's sampler. An item that the level
+// before did not have is drawn as new.
+const LEVEL_LADDER = [
+  { id: "conveyor", name: "Conveyor", levels: [
+    ["pick by colour", "slow belt", "12 objects", "1 bin"],
+    ["pick by colour", "fast belt", "12 objects", "1 bin"],
+    ["pick by colour", "medium belt", "14 objects, closer together", "1 bin"],
+    ["colour + shape", "medium belt", "12 objects", "1 bin"],
+    ["colour + size", "medium belt", "12 objects", "1 bin"],
+    ["colour + shape + size", "medium belt", "13 objects", "1 bin"],
+    ["pick by colour", "medium belt", "14 objects", "2 bins"],
+    ["colour + shape + size", "fast belt", "16 objects, closest together", "2 bins"],
+  ] },
+  { id: "crane", name: "Crane", levels: [
+    ["hook at rest", "eye in place"],
+    ["small swing, 2–4 cm", "eye in place"],
+    ["swing 8–13 cm", "eye in place"],
+    ["swing 14–20 cm", "eye in place"],
+    ["swing 14–20 cm", "random release phase", "eye in place"],
+    ["swing 14–20 cm", "fore-aft swing too", "eye in place"],
+    ["swing 14–20 cm", "random release phase", "eye moved"],
+    ["swing 14–20 cm", "fore-aft swing too", "random release phase", "eye moved"],
+  ] },
+  { id: "goalkeeper", name: "Goalkeeper", levels: [
+    ["3 balls", "2.0–2.8 s apart", "within reach", "hand targets"],
+    ["3 balls", "1.0–1.5 s apart", "within reach", "hand targets"],
+    ["3 balls", "1.0–1.5 s apart", "closer catapults", "within reach", "hand targets"],
+    ["3 balls", "1.0–1.5 s apart", "closer catapults", "edge of reach", "hand targets"],
+    ["3 balls", "2 at once", "within reach", "14 arm joints"],
+    ["save 2, let 1 through", "1.0–1.5 s apart", "within reach", "14 arm joints"],
+    ["save 2, let 1 through", "2 at once", "edge of reach", "14 arm joints"],
+    ["save 2, let 1 through", "2 at once", "0.6–0.9 s apart", "edge of reach", "14 arm joints"],
+  ] },
+  { id: "marble", name: "Marble maze", levels: [
+    ["1 marble", "1 start region", "gate on a fixed cycle"],
+    ["1 marble", "4 start regions", "gate on a fixed cycle"],
+    ["1 marble", "4 start regions", "gate at any phase"],
+    ["1 marble", "4 start regions", "gate at any phase", "gate speed varies"],
+    ["1 marble", "4 start regions", "gate at any phase", "gate speed varies", "starts rolling"],
+    ["2 marbles, same colour", "gate at any phase", "gate speed varies"],
+    ["2 marbles, red and blue", "gate at any phase", "gate speed varies"],
+    ["2 marbles, either rule", "gate at any phase", "gate speed varies", "starts rolling"],
+  ] },
+  { id: "pinball", name: "Pinball", levels: [
+    ["4 targets", "18 mm targets", "4 hits", "40 s"],
+    ["4 targets", "18 mm targets", "6 hits", "40 s"],
+    ["4 targets", "10 mm targets", "4 hits", "40 s"],
+    ["4 targets", "12 mm targets", "6 hits", "40 s"],
+    ["5 targets, closer together", "12 mm targets", "6 hits", "60 s"],
+    ["5 targets, closer together", "10 mm targets", "8 hits", "60 s"],
+    ["5 targets, closer together", "8 mm targets", "8 hits", "60 s"],
+    ["5 targets, closer together", "8 mm targets", "10 hits", "60 s"],
+  ] },
+];
+
+function renderLevelLadder() {
+  const tabs = LEVEL_LADDER.map(({ id, name }, index) => `<input type="radio" name="level-ladder" id="ll-${id}" class="ll-input"${index === 0 ? " checked" : ""}><label for="ll-${id}" class="ll-tab">${escapeHtml(name)}</label>`).join("");
+  const panels = LEVEL_LADDER.map(({ id, levels }) => {
+    const rows = levels.map((items, index) => {
+      const before = new Set(levels[index - 1] || items);
+      const chips = items.map((item) => `<b${before.has(item) ? "" : ' class="ll-new"'}>${escapeHtml(item)}</b>`).join("");
+      return `<li><span class="ll-level">L${index + 1}</span><span class="ll-chips">${chips}</span></li>`;
+    }).join("");
+    return `<ol class="ll-panel ll-panel-${id}">${rows}</ol>`;
+  }).join("");
+  return `<figure class="level-ladder">
+    <div class="ll-tabs">${tabs}${panels}</div>
+    <figcaption>Highlighted items changed from the level before. The seed then picks the exact scene inside these ranges.</figcaption>
   </figure>`;
 }
 

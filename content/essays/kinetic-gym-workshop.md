@@ -52,6 +52,10 @@ I’ve grouped the [task catalog](https://huggingface.co/datasets/semioz/kinetic
 
 [[workshop-showcase]]
 
+This is what changes from level to level in each family:
+
+[[level-ladder]]
+
 ## How realistic is the physics
 
 The robots come straight from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie), a library of ready-made robot models. For everything else, the Architect uses the robot maker's published specs where it can, like how far the Panda arm reaches, how much it can lift and how hard its gripper squeezes. Then it runs small tests in MuJoCo before building anything: how fast a marble rolls on a tilted board, how long the crane hook takes to swing, whether a grasp holds.
