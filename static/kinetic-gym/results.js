@@ -1,8 +1,4 @@
-(() => {
-  const root = document.querySelector("[data-passk-results]");
-  if (!root) return;
-  const tabs = [...root.querySelectorAll("[data-passk-select]")];
-  const panels = [...root.querySelectorAll("[data-passk-heatmap]")];
+document.querySelectorAll("[data-passk-results]").forEach((root) => {
   const models = [...root.querySelectorAll("[data-passk-focus]")];
 
   function focusModel(event) {
@@ -23,37 +19,13 @@
     }
   }
 
-  function select(tab, focus = false) {
-    tabs.forEach((button) => {
-      const active = button === tab;
-      button.setAttribute("aria-selected", String(active));
-      button.tabIndex = active ? 0 : -1;
-    });
-    panels.forEach((panel) => {
-      panel.hidden = panel.dataset.passkHeatmap !== tab.dataset.passkSelect;
-    });
-    if (focus) tab.focus();
-  }
-
   root.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       root.querySelectorAll("[data-passk-point]").forEach((point) => point.setAttribute("data-tooltip-dismissed", ""));
     }
   });
 
-  root.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-passk-select]");
-    if (tab) select(tab);
-  });
-  root.querySelector("[role=tablist]").addEventListener("keydown", (event) => {
-    const index = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
-    const indices = { ArrowRight: (index + 1) % tabs.length, ArrowLeft: (index - 1 + tabs.length) % tabs.length, Home: 0, End: tabs.length - 1 };
-    if (!Object.hasOwn(indices, event.key)) return;
-    event.preventDefault();
-    select(tabs[indices[event.key]], true);
-  });
-
-  // Draw the curves and fill the heatmap once, the first time the section scrolls into view.
+  // Draw the curves once, the first time the section scrolls into view.
   if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
     root.classList.add("is-armed");
     const observer = new IntersectionObserver((entries) => {
@@ -65,4 +37,4 @@
     }, { threshold: 0.2 });
     observer.observe(root);
   }
-})();
+});

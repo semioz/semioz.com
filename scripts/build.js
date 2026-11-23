@@ -13,6 +13,8 @@ const SITE = {
   brand: "semioz.com",
   headerBrand: "semioz",
   description: "Writing by Semih Berkay Öztürk.",
+  url: "https://semioz.com",
+  image: "/images/semihport.jpg",
 };
 
 export function renderMarkdown(markdown) {
@@ -75,7 +77,7 @@ export function renderMarkdown(markdown) {
       continue;
     }
 
-    const embed = { "[[workshop-showcase]]": renderWorkshopShowcase, "[[task-gallery]]": renderTaskGallery, "[[passk-results]]": () => renderPasskResults(passkResults), "[[workshop-architecture]]": renderWorkshopArchitecture, "[[pipeline]]": renderPipeline, "[[seed-examples]]": renderSeedExamples, "[[conveyor-levels]]": renderConveyorLevels, "[[level-ladder]]": renderLevelLadder, "[[marble-blind]]": renderMarbleBlind }[line.trim()];
+    const embed = { "[[workshop-showcase]]": renderWorkshopShowcase, "[[task-gallery]]": renderTaskGallery, "[[passk-results]]": () => renderPasskResults(passkResults), "[[passk-overall]]": () => renderPasskOverall(passkResults), "[[passk-levels]]": () => renderPasskLevels(passkResults), "[[workshop-architecture]]": renderWorkshopArchitecture, "[[pipeline]]": renderPipeline, "[[seed-examples]]": renderSeedExamples, "[[conveyor-levels]]": renderConveyorLevels, "[[level-ladder]]": renderLevelLadder, "[[marble-blind]]": renderMarbleBlind, "[[crane-fail]]": renderCraneFail, "[[controller-replay]]": renderControllerReplay }[line.trim()];
     if (embed) {
       flushParagraph();
       flushList();
@@ -154,7 +156,7 @@ export function renderMarkdown(markdown) {
 
 function renderTaskGallery() {
   const cards = workshopCatalog.families.map((family, index) => {
-    const { src, poster, caption } = family.video;
+    const { src, poster } = family.video;
     return `<figure class="task-gallery-card">
       <button type="button" class="task-gallery-motion" data-gallery-motion aria-label="Animate ${escapeAttr(family.name)} preview" aria-pressed="false" disabled>
         <video muted loop playsinline preload="none" poster="${escapeAttr(poster)}" data-video-src="${escapeAttr(src)}" aria-hidden="true"></video>
@@ -162,7 +164,6 @@ function renderTaskGallery() {
       <figcaption>
         <div class="task-gallery-heading"><span aria-hidden="true">${String(index + 1).padStart(2, "0")}</span><h3>${escapeHtml(family.name)}</h3><span class="task-gallery-levels">${family.tasks.length} catalog levels</span></div>
         <p class="task-gallery-description">${escapeHtml(family.tasks[0].description)}</p>
-        <p class="task-gallery-credit">${escapeHtml(caption)}</p>
         <p class="task-gallery-error" data-gallery-error hidden>Preview unavailable. <a href="${escapeAttr(src)}">Open the recording</a>.</p>
       </figcaption>
     </figure>`;
@@ -170,7 +171,6 @@ function renderTaskGallery() {
   return `<section class="task-gallery" id="task-families" data-task-gallery aria-label="KineticGym task examples">
     <noscript><p>Enable JavaScript for looping previews.</p></noscript>
     <div class="task-gallery-grid">${cards}</div>
-    <p class="task-gallery-help">See the <a href="/blog/kinetic-gym-workshop/">Workshop post</a> for the detailed level-by-level catalog.</p>
   </section>
   <script src="/kinetic-gym/gallery.js" defer></script>`;
 }
@@ -239,6 +239,10 @@ function validatePasskResults(results) {
       }
       const overall = model.passAtKPercent[family.id]?.overall;
       if (overall !== undefined && typeof overall !== "boolean") throw new TypeError(`${model.name}, ${family.name}: overall must be a boolean.`);
+      const levels = model.passAtKPercent[family.id]?.levels;
+      if (levels !== undefined && (!Array.isArray(levels) || levels.length !== 8 || levels.some((rate) => typeof rate !== "number" || rate < 0 || rate > 100))) {
+        throw new TypeError(`${model.name}, ${family.name}: levels must be eight pass@1 percentages.`);
+      }
       const rates = [1, 3, 5].map((k) => model.passAtKPercent[family.id]?.[k]);
       if (rates.some((rate) => typeof rate !== "number" || !Number.isFinite(rate) || rate < 0 || rate > 100)) {
         throw new TypeError(`${model.name}, ${family.name}: percentages must be finite numbers from 0 to 100.`);
@@ -251,10 +255,19 @@ function validatePasskResults(results) {
   if (!curveFamilies(results).length) throw new TypeError("At least one family needs a pass@k curve.");
 }
 
+// Hardest family first, by the mean pass@1 of the models that measured it; unmeasured families go last.
+function byDifficulty(results, families) {
+  const meanRate = (family) => {
+    const rates = results.models.map((model) => model.passAtKPercent[family.id]?.[1]).filter((rate) => typeof rate === "number");
+    return rates.length ? rates.reduce((sum, rate) => sum + rate, 0) / rates.length : Infinity;
+  };
+  return [...families].sort((a, b) => meanRate(a) - meanRate(b));
+}
+
 // Families get their own curve chart, never an average across families: rates differ too much between them for a mean
-// to say anything. overall: false keeps a family in the heatmap only (too few levels measured).
+// to say anything. overall: false keeps a family out of the curves (too few levels measured).
 function curveFamilies(results) {
-  return workshopCatalog.families.filter((family) => results.models.some((model) => model.passAtKPercent[family.id] && model.passAtKPercent[family.id].overall !== false));
+  return byDifficulty(results, workshopCatalog.families).filter((family) => results.models.some((model) => model.passAtKPercent[family.id] && model.passAtKPercent[family.id].overall !== false));
 }
 
 export function renderPasskResults(results) {
@@ -278,29 +291,71 @@ export function renderPasskResults(results) {
           <div class="passk-x-ticks" aria-hidden="true">${ks.map((k) => `<span>k = ${k}</span>`).join("")}</div>
         </div></div>`;
   };
-  const tabs = ks.map((k) => `<button type="button" role="tab" id="passk-tab-${k}" aria-controls="passk-heatmap-${k}" aria-selected="${k === 1}" tabindex="${k === 1 ? 0 : -1}" data-passk-select="${k}">pass@${k}</button>`).join("");
-  const heatmaps = ks.map((k) => `<div role="tabpanel" id="passk-heatmap-${k}" aria-labelledby="passk-tab-${k}" data-passk-heatmap="${k}" tabindex="0"${k === 1 ? "" : " hidden"}>
-    <table class="passk-heatmap"><caption>pass@${k} · success by task family (%)</caption><thead><tr><th scope="col">Task family</th>${results.models.map((model, index) => `<th scope="col" class="passk-series-${index}"><span class="passk-column-key" aria-hidden="true"></span>${escapeHtml(model.name)}</th>`).join("")}</tr></thead>
-    <tbody>${families.map((family, row) => `<tr><th scope="row">${escapeHtml(family.name)}</th>${results.models.map((model, column) => {
-      if (model.passAtKPercent[family.id] === null) return `<td class="passk-missing" data-passk-missing title="Not measured">—</td>`;
-      const rate = model.passAtKPercent[family.id][k];
-      return `<td data-passk-score="${rate}" style="--heat:${(rate * .45).toFixed(3)}%;--order:${row + column}">${percent(rate)}</td>`;
-    }).join("")}</tr>`).join("")}</tbody></table>
-  </div>`).join("");
   return `<section class="passk-results" id="model-results" data-passk-results aria-label="Model pass@k comparison">
     <figure class="passk-card"><figcaption><h3>pass@k by task family</h3><span class="passk-tag">Evaluation · held-out test seeds</span></figcaption>
       <p class="passk-chart-note">Success (%) versus independent attempts, k, averaged over the measured levels of each family. Families are not averaged together.</p>
       <div class="passk-legend" role="group" aria-label="Highlight a model">${legend}</div>
       <div class="passk-families">${curveFamilies(results).map(chart).join("")}</div>
-    </figure>
-    <figure class="passk-card"><figcaption><h3>Success by task family</h3></figcaption>
-      <div class="passk-heatmap-controls"><div class="passk-tabs" role="tablist" aria-label="Heatmap pass@k">${tabs}</div><div class="passk-scale" aria-hidden="true"><span>0%</span><i></i><span>100%</span></div></div>
-      <noscript><p>The heatmap shows pass@1. Enable JavaScript to switch k.</p></noscript>
-      ${heatmaps}
       ${results.levelNote ? `<p class="passk-chart-note passk-footnote">${escapeHtml(results.levelNote)}</p>` : ""}
     </figure>
   </section>
   <script src="/kinetic-gym/results.js" defer></script>`;
+}
+
+// pass@1 on each level, one small chart per family, so the drop on the harder levels is visible.
+export function renderPasskLevels(results) {
+  validatePasskResults(results);
+  const levels = [1, 2, 3, 4, 5, 6, 7, 8];
+  const x = (index) => (index / (levels.length - 1)) * 100;
+  const legend = results.models.map((model, index) => ({ model, index }))
+    .map(({ model, index }) => `<button type="button" class="passk-legend-item passk-series-${index}" data-passk-focus="${index}"><i aria-hidden="true"></i>${escapeHtml(model.name)}</button>`).join("");
+  const grid = [0, 25, 50, 75, 100].map((rate) => `<line x1="0" x2="600" y1="${260 * (1 - rate / 100)}" y2="${260 * (1 - rate / 100)}" vector-effect="non-scaling-stroke"/>`).join("");
+  const chart = (family) => {
+    const measured = results.models.map((model, index) => ({ model, index, rates: model.passAtKPercent[family.id]?.levels })).filter(({ rates }) => rates);
+    if (!measured.length) return "";
+    const curves = measured.map(({ model, index, rates }) => {
+      const coordinates = rates.map((rate, level) => `${(x(level) * 6).toFixed(3)},${(260 * (1 - rate / 100)).toFixed(3)}`).join(" ");
+      return `<g class="passk-series-${index}" data-passk-focus="${index}"><title>${escapeHtml(model.name)}</title><polyline class="passk-hit" points="${coordinates}" vector-effect="non-scaling-stroke"/><polyline data-passk-series="${index}" points="${coordinates}" vector-effect="non-scaling-stroke"/></g>`;
+    }).join("");
+    const points = measured.map(({ model, index, rates }) => rates.map((rate, level) => `<button type="button" class="passk-point passk-series-${index}" data-passk-point="${family.id}-${index}-l${level + 1}" data-passk-focus="${index}" style="left:${x(level).toFixed(3)}%;top:${100 - rate}%;--k:${level}" aria-label="${escapeAttr(`${family.name}, ${model.name} · level ${level + 1}: ${rate.toFixed(1)}%`)}"></button>`).join("")).join("");
+    return `<div class="passk-family"><h4 id="passk-level-${family.id}">${escapeHtml(family.name)}</h4>
+        <div class="passk-chart" role="group" aria-labelledby="passk-level-${family.id}">
+          <div class="passk-y-ticks" aria-hidden="true">${[100, 75, 50, 25, 0].map((rate) => `<span style="top:${100 - rate}%">${rate}</span>`).join("")}</div>
+          <div class="passk-plot"><svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true">${grid}${curves}</svg>${points}</div>
+          <div class="passk-x-ticks" aria-hidden="true">${levels.map((level) => `<span>L${level}</span>`).join("")}</div>
+        </div></div>`;
+  };
+  return `<section class="passk-results passk-levels" data-passk-results aria-label="Success rate by level">
+    <figure class="passk-card"><figcaption><h3>Success rate by level</h3><span class="passk-tag">pass@1 · held-out test seeds</span></figcaption>
+      <p class="passk-lede">Levels are designed to get harder from 1 to 8, but each one changes a different part of the task, like speed, rules, clutter or timing. So a later level can turn out easier for a model than an earlier one. With 20 episodes per level, small bumps are mostly noise.</p>
+      <div class="passk-legend" role="group" aria-label="Highlight a model">${legend}</div>
+      <div class="passk-families">${byDifficulty(results, workshopCatalog.families).map(chart).join("")}</div>
+    </figure>
+  </section>`;
+}
+
+// Share of scored episodes solved (pass@1), one row per family. No bar averages families, for the reason above.
+export function renderPasskOverall(results) {
+  validatePasskResults(results);
+  const all = results.models.map((model, index) => ({ model, index }));
+  const models = all.filter(({ model }) => Object.values(model.passAtKPercent).some(Boolean));
+  const legend = all.map(({ model, index }) => `<span class="passk-legend-item passk-series-${index}"><i aria-hidden="true"></i>${escapeHtml(model.name)}</span>`).join("");
+  const rows = byDifficulty(results, workshopCatalog.families).map((family) => {
+    const bars = models.map(({ model, index }) => {
+      const entry = model.passAtKPercent[family.id];
+      if (!entry) return `<div class="passk-bar passk-missing"><span class="passk-bar-value">—</span></div>`;
+      const rate = entry[1];
+      return `<div class="passk-bar passk-series-${index}" title="${escapeAttr(`${family.name}, ${model.name}: ${rate.toFixed(1)}% solved`)}"><i style="--rate:${rate}"></i><span class="passk-bar-value">${Math.round(rate)}%</span></div>`;
+    }).join("");
+    return `<tr><th scope="row">${escapeHtml(family.name)}</th><td>${bars}</td></tr>`;
+  }).join("");
+  return `<section class="passk-results passk-overall" aria-label="Success rate by task family">
+    <figure class="passk-card"><figcaption><h3>Success rate by task family</h3><span class="passk-tag">pass@1 · held-out test seeds</span></figcaption>
+      <div class="passk-legend">${legend}</div>
+      <table class="passk-bars" aria-label="Share of scored episodes solved (%) by task family and model"><tbody>${rows}</tbody></table>
+      <p class="passk-chart-note passk-footnote">Up to 160 scored episodes per family and model, from 8 levels, 4 seeds and 5 attempts each. Conveyor picking is single-shot, but the other families allow three rehearsals before each scored episode.</p>
+    </figure>
+  </section>`;
 }
 
 function renderWorkshopArchitecture() {
@@ -428,6 +483,32 @@ function renderLevelLadder() {
   </figure>`;
 }
 
+function renderControllerReplay() {
+  return `<figure class="controller-replay" data-controller-replay data-src="/kinetic-gym/controller/run.json" data-frames="/kinetic-gym/controller/frames">
+    <div class="cr-stage">
+      <div class="cr-cam"><img alt="GPT-6.1 Sol's controller: hand camera view" width="192" height="144"><svg class="cr-boxes" viewBox="0 0 192 144" aria-hidden="true"></svg></div>
+      <div class="cr-code">
+        <div class="cr-title"><code>act(obs)</code> in Sol's <code>solution.py</code></div>
+        <ol class="cr-phases"></ol>
+        <pre class="cr-return" aria-live="off"></pre>
+      </div>
+    </div>
+    <div class="cr-clock"></div>
+    <div class="cr-controls">
+      <button type="button" class="cr-play" aria-pressed="true">Pause</button>
+      <button type="button" class="cr-speed" aria-label="Playback speed">1×</button>
+      <div class="cr-timeline" tabindex="0" role="slider" aria-label="Replay time"><span class="cr-head"></span></div>
+    </div>
+  </figure>
+  <script src="/kinetic-gym/controller.js" defer></script>`;
+}
+
+function renderCraneFail() {
+  return `<figure class="blind-clip">
+    <video autoplay muted loop playsinline preload="metadata" poster="/kinetic-gym/crane-sol-fail.jpg" src="/kinetic-gym/crane-sol-fail.mp4" aria-label="GPT-6.1 Sol's one-shot crane controller threads the hook through the eye, but the hook slips out and never carries the load"></video>
+  </figure>`;
+}
+
 function renderMarbleBlind() {
   return `<figure class="blind-clip">
     <video autoplay muted loop playsinline preload="metadata" poster="/kinetic-gym/marble-blind.jpg" src="/kinetic-gym/marble-blind.mp4" aria-label="DeepSeek's camera-free policy steering the marble into the red hole"></video>
@@ -440,13 +521,13 @@ function renderPipeline() {
   return `<figure class="kg-pipeline">${svg}</figure>`;
 }
 
-const TRACE_LOGOS = { DeepSeek: "/kinetic-gym/logos/deepseek.svg" };
+const TRACE_LOGOS = { DeepSeek: "/kinetic-gym/logos/deepseek.svg", GPT: "/kinetic-gym/logos/openai.svg" };
 
 // A ```trace block: "Model | context", then "> " thoughts, "$ tool: command" calls and "= " results, in trace order.
 function renderTrace(lines) {
   const [name, context = ""] = (lines[0] || "").split("|").map((part) => part.trim());
   const initials = (name.split(" ")[0].match(/[A-Z]/g) || [name[0] || "?"]).slice(0, 2).join("");
-  const logo = TRACE_LOGOS[name.split(" ")[0]];
+  const logo = Object.entries(TRACE_LOGOS).find(([prefix]) => name.startsWith(prefix))?.[1];
   const items = [];
   for (const line of lines.slice(1)) {
     const [, marker, text = ""] = line.match(/^([>$=])\s?(.*)$/) || [];
@@ -662,6 +743,7 @@ function renderWriting(posts, stylesheet) {
     title: `writing - ${SITE.title}`,
     stylesheet,
     description: SITE.description,
+    preview: { path: "/writing/" },
     main: `<section class="post-list" aria-label="Writing">${renderPostRows(posts)}</section>`,
   });
 }
@@ -695,6 +777,7 @@ function renderPost(post, stylesheet) {
     stylesheet,
     description: post.description || SITE.description,
     noindex: post.draft,
+    preview: { title: post.title, path: `/blog/${post.slug}/`, image: post.image, type: "article" },
     main: `<article class="article">
   ${contents}
   <header class="article-header">
@@ -707,7 +790,7 @@ function renderPost(post, stylesheet) {
   });
 }
 
-function layout({ title, description, main, stylesheet = "/styles.css", noindex = false, brand = SITE.brand }) {
+function layout({ title, description, main, stylesheet = "/styles.css", noindex = false, brand = SITE.brand, preview = {} }) {
   const portrait = brand === SITE.headerBrand
     ? `<figure class="portrait-engraving" data-portrait-engraving role="img" aria-label="Engraved portrait of Semih Berkay Öztürk">
         <canvas class="portrait-engraving-canvas" aria-hidden="true"></canvas>
@@ -722,6 +805,7 @@ function layout({ title, description, main, stylesheet = "/styles.css", noindex 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${escapeAttr(description)}">
   ${noindex ? '<meta name="robots" content="noindex">' : ""}
+  ${renderPreviewMeta({ title, description, ...preview })}
   <title>${escapeHtml(title)}</title>
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
@@ -783,6 +867,24 @@ async function listMarkdownFiles(dir) {
     if (error.code === "ENOENT") return [];
     throw error;
   }
+}
+
+// Open Graph and Twitter tags, which chat apps and social sites read to build link previews.
+function renderPreviewMeta({ title, description, path = "/", image, type = "website" }) {
+  const imageUrl = new URL(image || SITE.image, SITE.url).href;
+  const tags = [
+    ["property", "og:site_name", SITE.title],
+    ["property", "og:type", type],
+    ["property", "og:title", title],
+    ["property", "og:description", description],
+    ["property", "og:url", new URL(path, SITE.url).href],
+    ["property", "og:image", imageUrl],
+    ["name", "twitter:card", image ? "summary_large_image" : "summary"],
+    ["name", "twitter:title", title],
+    ["name", "twitter:description", description],
+    ["name", "twitter:image", imageUrl],
+  ];
+  return tags.map(([key, name, value]) => `<meta ${key}="${name}" content="${escapeAttr(value)}">`).join("\n  ");
 }
 
 function renderRedirect(url) {

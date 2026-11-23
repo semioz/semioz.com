@@ -1,42 +1,42 @@
-<svg class="wa" viewBox="0 0 1000 560" role="img" aria-labelledby="kp-title">
-<title id="kp-title">How KineticGym fits together. Workshop generates task families, the owner gate keeps the levels that pass, and each task is a family, level and seed. In a Prime sandbox the agent writes a controller that sends actions to the realtime simulator and gets frames and sensors back. The simulator's verdict feeds pass@k results and the RL reward, and RL trains the agent's model.</title>
+<svg class="wa" viewBox="0 0 1000 580" role="img" aria-labelledby="kp-title">
+<title id="kp-title">How KineticGym fits together. Workshop generates task families, the owner gate checks every level, and each task is a family, level and seed. In a Prime sandbox the agent writes a controller that sends actions to the realtime simulator and gets frames and sensors back. The simulator's verdict feeds pass@k results and the RL reward, and RL updates the agent's model.</title>
 <defs>
-<marker id="kp-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="wa-head" d="M0 0 L10 5 L0 10 z"/></marker>
+<marker id="kp-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="wa-head" d="M0 0 L10 5 L0 10 z"/></marker>
 </defs>
 <g class="wa-shapes">
 <rect class="wa-node wa-agent" x="40" y="40" width="260" height="84" rx="14"/>
 <rect class="wa-node wa-owner" x="370" y="40" width="260" height="84" rx="14"/>
 <rect class="wa-node wa-artifact" x="700" y="40" width="260" height="84" rx="14"/>
-<rect class="wa-node wa-group" x="40" y="214" width="590" height="190" rx="14"/>
-<rect class="wa-node wa-solver" x="70" y="276" width="230" height="96" rx="14"/>
-<rect class="wa-node wa-owner" x="370" y="276" width="230" height="96" rx="14"/>
-<rect class="wa-node wa-output" x="700" y="282" width="260" height="84" rx="14"/>
-<rect class="wa-node wa-output" x="230" y="466" width="260" height="76" rx="14"/>
+<rect class="wa-node wa-group" x="40" y="204" width="590" height="214" rx="14"/>
+<rect class="wa-node wa-solver" x="70" y="266" width="220" height="100" rx="14"/>
+<rect class="wa-node wa-owner" x="380" y="266" width="220" height="100" rx="14"/>
+<rect class="wa-node wa-output" x="700" y="274" width="260" height="84" rx="14"/>
+<rect class="wa-node wa-output" x="380" y="474" width="220" height="84" rx="14"/>
 </g>
 <g class="wa-edges">
-<path class="wa-edge" d="M300 82 L358 82" marker-end="url(#kp-head)"/>
-<path class="wa-edge" d="M630 82 L688 82" marker-end="url(#kp-head)"/>
-<path class="wa-edge" d="M830 124 L830 170 L335 170 L335 202" marker-end="url(#kp-head)"/>
-<path class="wa-edge" d="M300 304 L358 304" marker-end="url(#kp-head)"/>
-<path class="wa-edge" d="M370 344 L312 344" marker-end="url(#kp-head)"/>
-<path class="wa-edge" d="M630 324 L688 324" marker-end="url(#kp-head)"/>
-<path class="wa-edge" d="M440 372 L440 454" marker-end="url(#kp-head)"/>
-<path class="wa-edge wa-dashed" d="M280 466 L280 384" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M300 82 L360 82" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M630 82 L690 82" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M830 124 L830 164 L180 164 L180 256" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M290 298 L370 298" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M380 334 L300 334" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M600 316 L690 316" marker-end="url(#kp-head)"/>
+<path class="wa-edge" d="M490 366 L490 464" marker-end="url(#kp-head)"/>
+<path class="wa-edge wa-dashed" d="M380 516 L180 516 L180 376" marker-end="url(#kp-head)"/>
 </g>
 <g class="wa-text" text-anchor="middle" font-size="19">
 <text class="wa-title" x="170" y="76" font-size="24">Workshop</text><text x="170" y="104">generates task families</text>
-<text class="wa-title" x="500" y="76" font-size="24">Owner gate</text><text x="500" y="104">keeps levels that pass</text>
+<text class="wa-title" x="500" y="76" font-size="24">Owner gate</text><text x="500" y="104">checks every level</text>
 <text class="wa-title" x="830" y="76" font-size="24">Task</text><text x="830" y="104">family · level · seed</text>
-<text x="590" y="160">one episode</text>
-<text x="66" y="244" text-anchor="start">Prime sandbox</text>
-<text class="wa-title" x="185" y="316" font-size="24">Agent</text><text x="185" y="344">writes a controller</text>
-<text class="wa-title" x="485" y="316" font-size="24">Simulator</text><text x="485" y="344">realtime MuJoCo</text>
-<text class="wa-title" x="830" y="318" font-size="24">Results</text><text x="830" y="346">pass@k per level</text>
-<text class="wa-title" x="360" y="500" font-size="24">RL</text><text x="360" y="526">conveyor family</text>
-<text x="329" y="296" font-size="16">actions</text>
-<text x="341" y="364" font-size="16">frames</text>
-<text x="659" y="314" font-size="16">verdict</text>
-<text x="490" y="420" text-anchor="start" font-size="16">reward</text>
-<text x="230" y="430" text-anchor="end" font-size="16">trains the model</text>
+<text x="505" y="154" font-size="16">one episode</text>
+<text x="62" y="234" text-anchor="start" font-size="16">Prime sandbox</text>
+<text class="wa-title" x="180" y="309" font-size="24">Agent</text><text x="180" y="337">writes a controller</text>
+<text class="wa-title" x="490" y="309" font-size="24">Simulator</text><text x="490" y="337">realtime MuJoCo</text>
+<text class="wa-title" x="830" y="310" font-size="24">Results</text><text x="830" y="338">pass@k per level</text>
+<text class="wa-title" x="490" y="524" font-size="24">RL</text>
+<text x="335" y="288" font-size="15">actions</text>
+<text x="335" y="356" font-size="15">frames</text>
+<text x="645" y="306" font-size="15">verdict</text>
+<text x="502" y="446" text-anchor="start" font-size="15">reward</text>
+<text x="280" y="506" font-size="15">updates the model</text>
 </g>
 </svg>

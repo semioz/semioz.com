@@ -160,6 +160,9 @@ Post body.
   const index = await readFile(join(root, "public", "index.html"), "utf8");
   const post = await readFile(join(root, "public", "blog", "first-post", "index.html"), "utf8");
   const oldLink = await readFile(join(root, "public", "essays", "first-post", "index.html"), "utf8");
+  assert.match(post, /<meta property="og:url" content="https:\/\/semioz\.com\/blog\/first-post\/">/);
+  assert.match(post, /<meta property="og:image" content="https:\/\/semioz\.com\/images\/semihport\.jpg">/);
+  assert.match(post, /<meta name="twitter:card" content="summary">/);
   assert.match(oldLink, /http-equiv="refresh" content="0; url=\/blog\/first-post\/"/);
   const writing = await readFile(join(root, "public", "writing", "index.html"), "utf8");
   const asset = await readFile(join(root, "public", "first.png"), "utf8");
@@ -364,31 +367,23 @@ test("performance figures stack at a capped width with transparent backgrounds",
   assert.match(card, /border:\s*0/);
   assert.match(card, /padding:\s*0/);
   assert.match(css, /\.passk-chart\s*\{[^}]*grid-template-rows:\s*clamp\(280px, 32vw, 440px\) 24px/s);
-  assert.match(css, /\.passk-results \.passk-heatmap\s*\{[^}]*font-size:\s*\.85rem/s);
 });
 
-test("pass@k embed renders curves and three family heatmaps without disclaimer badges", () => {
+test("pass@k embed renders curves without a heatmap or disclaimer badges", () => {
   const html = renderMarkdown("[[passk-results]]");
   assert.match(html, /id="model-results"/);
   assert.equal((html.match(/class="passk-family"/g) || []).length, 5);
   assert.equal((html.match(/data-passk-series=/g) || []).length, 10);
   assert.equal((html.match(/data-passk-point=/g) || []).length, 30);
   assert.doesNotMatch(html, /Overall pass@k/);
-  assert.equal((html.match(/data-passk-heatmap=/g) || []).length, 3);
-  assert.match(html, /id="passk-tab-1"[^>]*aria-selected="true" tabindex="0"/);
-  assert.match(html, /data-passk-heatmap="1" tabindex="0">/);
-  assert.match(html, /data-passk-heatmap="3" tabindex="0" hidden>/);
-  assert.match(html, /data-passk-heatmap="5" tabindex="0" hidden>/);
-  assert.match(html, /The heatmap shows pass@1\./);
-  assert.equal((html.match(/data-passk-score=/g) || []).length, 30);
-  assert.equal((html.match(/data-passk-missing/g) || []).length, 15);
+  assert.doesNotMatch(html, /passk-heatmap|role="tablist"/);
   assert.doesNotMatch(html, /tower/i);
   assert.doesNotMatch(html, /data-dummy-label|Dummy data — not measured/);
   assert.doesNotMatch(html, /passk-intro|These charts use illustrative placeholder values/);
   assert.match(html, /GPT-6\.1 Sol/);
   assert.match(html, /DeepSeek V4\.1 Flash/);
-  assert.match(html, /Gemini Carbon/);
-  assert.doesNotMatch(html, /<title>Gemini Carbon:/);
+  assert.match(html, /Gemini Neon/);
+  assert.doesNotMatch(html, /<title>Gemini Neon:/);
   assert.doesNotMatch(renderMarkdown("```text\n[[passk-results]]\n```"), /id="model-results"/);
 });
 
@@ -437,7 +432,6 @@ test("pass@k curves show each family's own rates, with no dummy label for measur
   assert.match(html, /<title>Sol: pass@1 90\.0%, pass@3 95\.0%, pass@5 100\.0%<\/title>/);
   assert.doesNotMatch(html, /pass@1 34\.0%/);
   assert.doesNotMatch(html, /Show exact values|class="passk-values"|data-passk-overall/);
-  assert.match(html, /class="passk-heatmap"/);
   results.dummy = false;
   assert.doesNotMatch(renderPasskResults(results), /data-dummy-label|not measured|dummy data/);
   results.models[0].name = "<img src=x onerror=alert(1)>";
@@ -476,7 +470,7 @@ test("pass@k rendering rejects missing families, invalid percentages and decreas
   }
 });
 
-test("pass@k marks unmeasured families and draws only the models measured on each family", async () => {
+test("pass@k draws only the models measured on each family", async () => {
   const { renderPasskResults } = await import("../scripts/build.js");
   const results = await passkFixture();
   results.models = results.models.slice(0, 2);
@@ -488,8 +482,6 @@ test("pass@k marks unmeasured families and draws only the models measured on eac
   const html = renderPasskResults(results);
   assert.match(html, /<title>Sol: pass@1 90\.0%, pass@3 95\.0%, pass@5 100\.0%<\/title>/);
   assert.match(html, /<title>Opus: pass@1 20\.0%, pass@3 40\.0%, pass@5 60\.0%<\/title>/);
-  const families = Object.keys(results.models[0].passAtKPercent).length;
-  assert.equal((html.match(/data-passk-missing/g) || []).length, 3 * (2 * families - 3));
   const crane = html.split('id="passk-curve-swinging-crane-hook"')[1].split('class="passk-family"')[0];
   assert.equal((crane.match(/data-passk-series=/g) || []).length, 1);
   assert.doesNotMatch(html, /passk-family-levels|Opus 12 levels/);
@@ -500,7 +492,7 @@ test("pass@k marks unmeasured families and draws only the models measured on eac
   assert.throws(() => renderPasskResults(results), /tasks/);
 });
 
-test("pass@k keeps a family marked overall: false in the heatmap but draws no curve for it", async () => {
+test("pass@k draws no curve for a family marked overall: false", async () => {
   const { renderPasskResults } = await import("../scripts/build.js");
   const results = await passkFixture();
   results.models = results.models.slice(0, 2);
@@ -512,7 +504,6 @@ test("pass@k keeps a family marked overall: false in the heatmap but draws no cu
   const html = renderPasskResults(results);
   assert.match(html, /<title>Sol: pass@1 50\.0%, pass@3 60\.0%, pass@5 70\.0%<\/title>/);
   assert.doesNotMatch(html, /id="passk-curve-tilting-marble-maze"/);
-  assert.equal((html.match(/data-passk-score=/g) || []).length, 3 * 2 * 2);
   results.models[0].passAtKPercent["tilting-marble-maze"].overall = "no";
   assert.throws(() => renderPasskResults(results), /overall must be a boolean/);
 });
@@ -524,7 +515,6 @@ test("pass@k allows unknown API cost for a fully unmeasured model without drawin
   model.avgApiCostUsdPerEpisode = null;
   for (const id of Object.keys(model.passAtKPercent)) model.passAtKPercent[id] = null;
   const html = renderPasskResults(fixture);
-  assert.equal((html.match(/data-passk-missing/g) || []).length, 15);
   assert.doesNotMatch(html, /<title>Sol:/);
   model.passAtKPercent["conveyor-selective-picking"] = { 1: 20, 3: 40, 5: 60 };
   assert.throws(() => renderPasskResults(fixture), /API cost/);
@@ -581,8 +571,8 @@ test("Workshop post stands alone while KineticGym retains its solver traces and 
   assert.match(main.html, /href="\/blog\/kinetic-gym-workshop\/"/);
   assert.doesNotMatch(main.html, /class="workshop-architecture"|What can go wrong/);
   assert.match(main.html, /What DeepSeek tried as a solver/);
-  assert.match(main.html, /44 of 145 evaluation episodes/);
-  assert.equal((main.html.match(/<figure class="trace">/g) || []).length, 5);
+  assert.match(main.html, /167 of 830 eval episodes/);
+  assert.equal((main.html.match(/<figure class="trace">/g) || []).length, 6);
   assert.match(main.html, /data-passk-results/);
   assert.match(main.html, /data-task-gallery/);
   assert.doesNotMatch(main.html, /data-workshop-showcase/);
@@ -609,4 +599,12 @@ test("diagram images break out of the column and keep plain images unchanged", (
   const html = renderMarkdown('![Flow](/a.png "diagram")\n\n![Photo](/b.png)');
   assert.match(html, /<img src="\/a\.png" alt="Flow" class="diagram">/);
   assert.match(html, /<img src="\/b\.png" alt="Photo">/);
+});
+
+test("episodes-solved embed draws one pass@1 bar per measured model and family, with no cross-family average", () => {
+  const html = renderMarkdown("[[passk-overall]]");
+  assert.equal((html.match(/<tr><th scope="row">/g) || []).length, 5);
+  assert.equal((html.match(/class="passk-bar passk-series-/g) || []).length, 10);
+  assert.match(html, /passk-legend-item passk-series-0"><i aria-hidden="true"><\/i>Gemini Neon/);
+  assert.match(html, /Conveyor picking is single-shot/);
 });

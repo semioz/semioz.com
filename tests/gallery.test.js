@@ -18,7 +18,7 @@ test("task gallery reuses five recordings with level counts and no player contro
   }
   for (const family of families) {
     assert.ok(html.includes(`data-video-src="${family.video.src}"`));
-    assert.ok(html.includes(family.video.caption));
+    assert.ok(!html.includes(family.video.caption));
   }
   assert.match(html, /gallery\.js/);
   assert.doesNotMatch(html, /role="tab"|data-workshop-task/);
