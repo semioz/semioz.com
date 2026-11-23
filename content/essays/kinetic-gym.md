@@ -16,9 +16,15 @@ Most of the work I’ve seen online is about static tasks, where nothing moves. 
 
 - **Tasks** come in families that I generate with [Workshop](/blog/kinetic-gym-workshop/). Each family has 8 difficulty levels, and a seed picks the exact scene within a level.
 - **The gate** checks every level on seeds no agent has seen.
-- **The agent** gets a shell through Prime Agent and writes a controller that drives the robot ([Giving coding agents control](#section-1)).
+- **The agent** gets a shell through Prime Agent and writes a controller that drives the robot ([Giving coding agents control](#section-2)).
 - **The simulator** runs MuJoCo in realtime in the same sandbox, out of the agent's reach, and decides at the end of the episode whether the task was solved.
 - **Results** are pass@k per family and level on held-out seeds ([Results](#section-4)).
+
+## Task families
+
+The [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78) has **five families with eight levels each**, so 40 tasks in total. I explained how Workshop generates and checks them in the [previous post](/blog/kinetic-gym-workshop/).
+
+[[task-gallery]]
 
 ## Giving coding agents control
 
@@ -71,12 +77,6 @@ The hook went through the eye, but it never carried the load. Sol didn't find ou
 In NVIDIA's [ASPIRE](https://arxiv.org/abs/2607.00272), the model fixes its code from execution traces or looks at the world after every step, so the world waits for the model. [PACT](https://aryanmadhavverma.com/posts/language-models-are-becoming-robot-orchestrators/), a really cool project by another resident (I'd recommend reading it), works the same way. In KineticGym the world doesn't wait. The physics runs in real time, so the controller has to be ready before the episode starts.
 
 So I added rehearsals. Before the scored episode, the agent can try its controller on up to three practice seeds of the same level, separate from the test seeds. Each rehearsal is a new episode, so the scene resets every time. After each one it sees if it succeeded and why it failed ("robot collided with table, load block or eye"), but never the hidden parameters. The scored episode still runs once. With three rehearsals, Sol's level-1 crane score went from 15% to about 50%.
-
-## Task families
-
-The [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78) has **five families with eight levels each**, so 40 tasks in total. I explained how Workshop generates and checks them in the [previous post](/blog/kinetic-gym-workshop/).
-
-[[task-gallery]]
 
 ## Results
 
