@@ -577,7 +577,7 @@ test("Workshop post stands alone while KineticGym retains its solver traces and 
   const main = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym.md"));
   const workshop = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym-workshop.md"));
   assert.equal(main.draft, true);
-  assert.equal(workshop.draft, true);
+  assert.equal(workshop.draft, false);
   assert.match(main.html, /href="\/blog\/kinetic-gym-workshop\/"/);
   assert.doesNotMatch(main.html, /class="workshop-architecture"|What can go wrong/);
   assert.match(main.html, /What DeepSeek tried as a solver/);

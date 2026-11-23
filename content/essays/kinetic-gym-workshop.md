@@ -1,7 +1,8 @@
 ---
 title: "Generating Robotics Tasks with KineticGym Workshop"
 description: "How coding agents build and stress-test MuJoCo task families."
-draft: true
+date: 2026-11-23T00:00:00+00:00
+image: /kinetic-gym/seeds/l8-s2000000.jpg
 topics:
   - robotics
   - agents
@@ -150,3 +151,5 @@ Whenever a blind policy got through, I changed the task and ran the gate again.
 ## What's next
 
 Every family now has eight frozen levels. In the next post I'll look at how well coding agents actually control them, and whether rehearsals and RL make their programs better.
+
+Big thanks to [Sebastian](https://x.com/omouamoua) for all the guidance along the way, and to [Prime Intellect](https://www.primeintellect.ai/) for the credits that made all these runs possible.
