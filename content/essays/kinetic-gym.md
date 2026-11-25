@@ -10,7 +10,7 @@ topics:
 
 As my first project at the RL Residency at [Prime Intellect](https://www.primeintellect.ai/), I’ve been building KineticGym over the past few weeks to see how well coding agents can solve robotics tasks while physics keeps running, without any VLAs or pretrained control policies.
 
-I've seen most of the work online focus on static tasks, i.e. when things don't move. Thus, I created dynamic tasks, where the environment evolves while the model is thinking or executing code.
+Most of the work I've seen online is on static tasks, so I wondered how agents would do when the world keeps going while the model is thinking or running code.
 
 [[pipeline]]
 
@@ -44,15 +44,15 @@ robot.start()         # Start the realtime episode.
 robot.act(action)     # Set the command the robot applies from the next control tick on.
 ```
 
-The simulation is paused before `start()` is called, giving the agent a chance to observe the environment and initialize its behavior. Once started, the physics loop proceeds without pausing. The agent never interacts directly with MuJoCo, which would require access to hidden state information, such as the positions of objects. Instead, the agent must infer this state from the images it sees and information provided by its sensors (like joint positions and velocities).
+The simulation is paused until `start()` is called, so the agent can look at the scene and get its code ready. Once it starts, physics doesn't pause anymore. The agent never touches MuJoCo directly, because that would give away hidden state like object positions. It has to figure that out from what it sees in the cameras and from its sensors (like joint positions and velocities).
 
-The controller is a standard user process inside the agent's sandbox and communicates only with the simulator via `robot.py`. The simulator is a root-only service co-located with the controller and it automatically evaluates an episode's performance at the end of the episode (you can't cheat by printing or writing something to disk to change the outcome). 
+The controller is a normal user process inside the agent's sandbox and only talks to the simulator through `robot.py`. The simulator is a root-only service running next to it, and it scores the episode itself when it ends, so you can't change the outcome by printing something or writing it to disk.
 
-This API is open-ended and any strategy the agent uses to interact with the simulator is allowed (such as reading out the camera and using joint angle/force control instead). What is not allowed is reading the simulator files or its process, reading the seed, or using a different action set than what the family prescribes. For example, the action set for the conveyor family is to output a hand position which is translated into arm actuation using an internal controller, while the action set for the crane family is to output raw joint targets which require the agent to implement its own inverse kinematics.
+The API is open-ended, so any strategy that goes through it is allowed, even using joint angles or forces instead of the camera. What's not allowed is reading the simulator's files, its process or the seed, or using a different action set than the one the family gives. For example, in conveyor the agent sends a hand position and a built-in controller moves the arm there, but in crane it sends raw joint targets, so it has to write its own inverse kinematics.
 
-In reality, the agent doesn't output actions step-by-step. Instead, it outputs a controller — a function `act(obs)` in `solution.py` that `run_controller.py` calls at the task's control rate, providing the time, sensor data, and most recent camera frames. The controller is simply a Python program with state, so it can maintain a strategy and update it at every timestep with new camera frames while still outputting one action per timestep like a physical robot.
+In practice, the agent doesn't send actions step by step. Instead it writes a controller, a function `act(obs)` in `solution.py` that `run_controller.py` calls at the task's control rate with the time, sensor data and latest camera frames. The controller is just a Python program with its own state, so it can keep a plan and update it every tick as new frames come in, while still sending one action per tick like a real robot.
 
-Below is a controller GPT-6.1 Sol has written for conveyor level 1, which requires the agent to place two yellow items into the bin without knowing how fast the conveyor belt is moving or when the objects will appear. The image on the left shows the agent's camera view. The camera images are provided at 5 hertz (marked in grey) while `act()` is called every 20 ms to continue acting on the last observed state. Note that the states on the right were discovered by Sol (I didn't provide them).
+Below is the controller GPT-6.1 Sol wrote for conveyor level 1, where it has to put two yellow objects in the bin without knowing how fast the belt is moving or when the objects show up. On the left is the agent's camera view. Camera frames come in at 5 Hz (grey marks), while `act()` is called every 20 ms and keeps acting on the last thing it saw. Sol came up with the states on the right itself, I didn't give them.
 
 [[controller-replay]]
 
