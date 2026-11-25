@@ -10,7 +10,7 @@ topics:
 
 As my first project at the RL Residency at [Prime Intellect](https://www.primeintellect.ai/), I’ve been building KineticGym over the past few weeks to see how well coding agents can solve robotics tasks while physics keeps running, without any VLAs or pretrained control policies.
 
-Most of the work I’ve seen online is about static tasks, where nothing moves. That’s why I made dynamic tasks, where the world doesn’t pause while the model thinks or runs code.
+I've seen most of the work online focus on static tasks, i.e. when things don't move. Thus, I created dynamic tasks, where the environment evolves while the model is thinking or executing code.
 
 [[pipeline]]
 
@@ -28,7 +28,7 @@ The [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree
 
 ## Giving coding agents control
 
-KineticGym is a [verifiers](https://github.com/PrimeIntellect-ai/verifiers) environment, so the sandbox, the robot, the budget and the reward all live in one place. I can use the same code for evals and for RL with prime-rl, and trying another harness is just a one-line change in the config.
+KineticGym is a [verifiers](https://github.com/PrimeIntellect-ai/verifiers) environment, so the sandbox, the robot, the budget and the reward all live in one place. I can use the same code for evals and for RL with prime-rl, and trying another harness is possible with just a one-line change in the config.
 
 For the evals I use [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) as the harness. It gives each model a shell where it can write and run Python. Those programs get camera images, sensors and controls through `robot.py`, and the agent builds its own helpers and controllers on top.
 
@@ -44,21 +44,21 @@ robot.start()         # Start the realtime episode.
 robot.act(action)     # Set the command the robot applies from the next control tick on.
 ```
 
-Before `start()`, physics is frozen, so the agent can look at the scene and get its code ready. After that, physics doesn't wait for anything. The agent never touches MuJoCo directly, because that would give away hidden state like object positions. It has to get those from the cameras and the robot's own sensors, like joint angles and speeds.
+The simulation is paused before `start()` is called, giving the agent a chance to observe the environment and initialize its behavior. Once started, the physics loop proceeds without pausing. The agent never interacts directly with MuJoCo, which would require access to hidden state information, such as the positions of objects. Instead, the agent must infer this state from the images it sees and information provided by its sensors (like joint positions and velocities).
 
-The controller runs as a normal user in the agent's sandbox and only talks to the simulator through `robot.py`. The simulator runs next to it as a root-only service and scores the episode itself when time is up, so nothing the agent prints or saves can change the result.
+The controller is a standard user process inside the agent's sandbox and communicates only with the simulator via `robot.py`. The simulator is a root-only service co-located with the controller and it automatically evaluates an episode's performance at the end of the episode (you can't cheat by printing or writing something to disk to change the outcome). 
 
-Anything the agent does through this interface is fair, even using joint angles or forces instead of the camera. Reading the simulator's files, its process or the seed isn't. The actions also differ by family. In conveyor the agent sends a hand position and a built-in controller moves the arm there, but in crane it sends raw joint targets, so it has to write its own inverse kinematics.
+This API is open-ended and any strategy the agent uses to interact with the simulator is allowed (such as reading out the camera and using joint angle/force control instead). What is not allowed is reading the simulator files or its process, reading the seed, or using a different action set than what the family prescribes. For example, the action set for the conveyor family is to output a hand position which is translated into arm actuation using an internal controller, while the action set for the crane family is to output raw joint targets which require the agent to implement its own inverse kinematics.
 
-In practice the agent doesn't send actions one by one from its turns. It writes a controller, an `act(obs)` function in `solution.py`, and `run_controller.py` calls it at the task's control rate with the time, sensors and latest camera frames. The controller is just a Python program with its own state, so it can keep a plan and change it every tick as new frames come in. The robot still applies one command per tick, like a real robot.
+In reality, the agent doesn't output actions step-by-step. Instead, it outputs a controller — a function `act(obs)` in `solution.py` that `run_controller.py` calls at the task's control rate, providing the time, sensor data, and most recent camera frames. The controller is simply a Python program with state, so it can maintain a strategy and update it at every timestep with new camera frames while still outputting one action per timestep like a physical robot.
 
-Here's GPT-6.1 Sol's controller on conveyor level 1, where it has to put the two yellow objects in the bin without knowing the belt speed or when they show up. On the left is what it sees through the camera on its hand. New frames come only 5 times a second (grey marks), but `act()` runs every 20 ms and keeps acting on what it saw. Sol came up with the states on the right itself, I didn't give them.
+Below is a controller GPT-6.1 Sol has written for conveyor level 1, which requires the agent to place two yellow items into the bin without knowing how fast the conveyor belt is moving or when the objects will appear. The image on the left shows the agent's camera view. The camera images are provided at 5 hertz (marked in grey) while `act()` is called every 20 ms to continue acting on the last observed state. Note that the states on the right were discovered by Sol (I didn't provide them).
 
 [[controller-replay]]
 
 ## Rehearsals
 
-At first every run was one-shot. The agent wrote a controller, ran it once, and that was its score. This way Sol solved only 3 of 20 level-1 crane episodes. To give an example, here's one of the failed ones. Sol planned everything from the frozen scene, and the only thing it checked before the run was whether the arm could reach its waypoints.
+At first every run was one-shot. The agent wrote a controller, ran it once and that was its score. This way Sol solved only 3 of 20 level-1 crane episodes. To give an example, here's one of the failed ones. Sol planned everything from the frozen scene, and the only thing it checked before the run was whether the arm could reach its waypoints.
 
 ```trace
 GPT-6.1 Sol | crane · level 1 · solver, no rehearsals
@@ -72,7 +72,7 @@ $ verdict: level 1, seed 2000000
 
 [[crane-fail]]
 
-The hook went through the eye, but it never carried the load. Sol didn't find out why, because there was no second try.
+The hook went through the eye but it never carried the load. Sol didn't find out why, because there was no second try.
 
 In NVIDIA's [ASPIRE](https://arxiv.org/abs/2607.00272), the model fixes its code from execution traces or looks at the world after every step, so the world waits for the model. [PACT](https://aryanmadhavverma.com/posts/language-models-are-becoming-robot-orchestrators/), a really cool project by another resident (I'd recommend reading it), works the same way. In KineticGym the world doesn't wait. The physics runs in real time, so the controller has to be ready before the episode starts.
 
@@ -140,7 +140,7 @@ DeepSeek V4.1 Flash | conveyor · level 2 · solver
 > So we work only through the provided interface.
 ```
 
-None of these got past the Prime sandbox. Still, each one was a question I had to answer before I could trust the reward.
+None of these attempts got past the Prime sandbox. Still, I had to check each one before I could trust the scores.
 
 ## What's next
 
