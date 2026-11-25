@@ -3,6 +3,7 @@ title: "Generating Robotics Tasks with KineticGym Workshop"
 description: "How coding agents build and stress-test MuJoCo task families."
 date: 2026-11-23T00:00:00+00:00
 image: /kinetic-gym/seeds/l8-s2000000.jpg
+draft: true
 topics:
   - robotics
   - agents
@@ -75,6 +76,20 @@ Most of the families above didn't pass the gate on the first try. A family can r
 
 1. **Reward hacking.** The success check, which is also the reward during evaluation and RL, says the task is done when it isn't. For example, a check that only looks at where the gripper is and never checks if the cube is actually in the bin. The gate runs the same check, so it can't catch this on its own. That's why the Inspector reads the code.
 2. **Shortcuts.** The task really gets done, but without the skill I wanted to test. For example, a catch that works by closing the gripper at a fixed time, so you don't need the camera at all. This is what the Adversary and the gate are for.
+
+The Inspector did catch real problems. On conveyor, the Architect doubled the physics step to save compute but wrote in the manifest that it was unchanged. The Inspector saw that, ran both steps and found big cubes slipped in the hand about ten times more with the original one. So the change was affecting how grasps work, and it rejected the family.
+
+```trace
+Claude Opus 5.5 | conveyor · Inspector
+> The spec gives a timestep of 0.00025 s with 80 substeps, while the manifest lists 0.125 ms. Those don't match, so I'll check the code to see which value is actually used.
+$ python: compiled-model audit
+= timestep 0.00025 s · foundation-validated timestep 0.000125 s
+> The 0.125 ms runs show much more slip for the large two-contact grasps, at 11.8 and 21.7 mm against 1.2 and 1.6 mm at 0.25 ms. The coarser timestep is clearly changing contact behaviour, and there's no evidence that justifies it, so I'm marking the physics check as a fail.
+$ review: inspection report
+= physics fail · evidence fail · candidate rejected
+```
+
+On marble it found that the walls and the gate were holding the marble like a clamp, and the reference controller only worked because of that. It also tested the success checks directly, with cases like lifting the wrong object and putting it back or leaving a cube on the bin's rim, and none of them counted as a success.
 
 Since these families are about seeing and reacting under time pressure, a policy that works without cameras is a red flag. The Adversary tries to find one on purpose, but it doesn't decide anything. The gate runs its blind policies on my side, with legal robot commands and the cameras off.
 

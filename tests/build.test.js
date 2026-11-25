@@ -567,7 +567,7 @@ test("Workshop post stands alone while KineticGym retains its solver traces and 
   const main = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym.md"));
   const workshop = await readContentFile(join(import.meta.dirname, "../content/essays/kinetic-gym-workshop.md"));
   assert.equal(main.draft, true);
-  assert.equal(workshop.draft, false);
+  assert.equal(workshop.draft, true);
   assert.match(main.html, /href="\/blog\/kinetic-gym-workshop\/"/);
   assert.doesNotMatch(main.html, /class="workshop-architecture"|What can go wrong/);
   assert.match(main.html, /What DeepSeek tried as a solver/);
@@ -578,7 +578,7 @@ test("Workshop post stands alone while KineticGym retains its solver traces and 
   assert.doesNotMatch(main.html, /data-workshop-showcase/);
   assert.match(workshop.html, /class="workshop-architecture"/);
   assert.equal((workshop.html.match(/<animateMotion/g) || []).length, 12);
-  assert.equal((workshop.html.match(/<figure class="trace">/g) || []).length, 4);
+  assert.equal((workshop.html.match(/<figure class="trace">/g) || []).length, 5);
   assert.match(workshop.html, /data-workshop-showcase/);
   assert.ok(workshop.html.indexOf("What a task family looks like") < workshop.html.indexOf("The task catalog"));
   assert.ok(workshop.html.indexOf("The task catalog") < workshop.html.indexOf("data-workshop-showcase"));

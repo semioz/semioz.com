@@ -521,7 +521,7 @@ function renderPipeline() {
   return `<figure class="kg-pipeline">${svg}</figure>`;
 }
 
-const TRACE_LOGOS = { DeepSeek: "/kinetic-gym/logos/deepseek.svg", GPT: "/kinetic-gym/logos/openai.svg" };
+const TRACE_LOGOS = { DeepSeek: "/kinetic-gym/logos/deepseek.svg", GPT: "/kinetic-gym/logos/openai.svg", Claude: "/kinetic-gym/logos/claude.svg" };
 
 // A ```trace block: "Model | context", then "> " thoughts, "$ tool: command" calls and "= " results, in trace order.
 function renderTrace(lines) {
