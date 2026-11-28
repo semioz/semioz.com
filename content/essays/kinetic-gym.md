@@ -10,7 +10,7 @@ topics:
 
 As my first project at the RL Residency at [Prime Intellect](https://www.primeintellect.ai/), I’ve been building KineticGym over the past few weeks to see how well coding agents can solve robotics tasks while physics keeps running, without any VLAs or pretrained control policies.
 
-Most of the work I've seen online is on static tasks, so I wondered how agents would do when the world keeps going while the model is thinking or running code.
+Most of the work I've seen online is on static tasks, so I wondered how agents would do in a dynamic world, where things keep moving and nothing waits for them.
 
 [[pipeline]]
 
@@ -22,7 +22,7 @@ Most of the work I've seen online is on static tasks, so I wondered how agents w
 
 ## Task families
 
-The [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78) has **five families with eight levels each**, so 40 tasks in total. I explained how Workshop generates and checks them in the [previous post](/blog/kinetic-gym-workshop/).
+The [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/c0530f93c7a69d2125234b08314d368271208fcd) has **five families with eight levels each**, so 40 tasks in total. I explained how Workshop generates and checks them in the [previous post](/blog/kinetic-gym-workshop/).
 
 [[task-gallery]]
 
@@ -51,6 +51,8 @@ The controller is a normal user process inside the agent's sandbox and only talk
 The API is open-ended, so any strategy that goes through it is allowed, even using joint angles or forces instead of the camera. What's not allowed is reading the simulator's files, its process or the seed, or using a different action set than the one the family gives. For example, in conveyor the agent sends a hand position and a built-in controller moves the arm there, but in crane it sends raw joint targets, so it has to write its own inverse kinematics.
 
 In practice, the agent doesn't send actions step by step. Instead it writes a controller, a function `act(obs)` in `solution.py` that `run_controller.py` calls at the task's control rate with the time, sensor data and latest camera frames. The controller is just a Python program with its own state, so it can keep a plan and update it every tick as new frames come in, while still sending one action per tick like a real robot.
+
+If `act()` takes longer than 20 ms, the physics doesn't wait for it. The robot keeps applying the last command, and the next call gets the latest state. This happens a lot. In about three quarters of Sol's runs, at least one tick took longer than 20 ms.
 
 Below is the controller GPT-6.1 Sol wrote for conveyor level 1, where it has to put two yellow objects in the bin without knowing how fast the belt is moving or when the objects show up. On the left is the agent's camera view. Camera frames come in at 5 Hz (grey marks), while `act()` is called every 20 ms and keeps acting on the last thing it saw. Sol came up with the states on the right itself, I didn't give them.
 

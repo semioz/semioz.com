@@ -1,6 +1,6 @@
 {
   "dataset": "https://huggingface.co/datasets/semioz/kinetic-gym-tasks",
-  "revision": "f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78",
+  "revision": "c0530f93c7a69d2125234b08314d368271208fcd",
   "families": [
     {
       "id": "conveyor-selective-picking",

@@ -50,7 +50,7 @@ If the gate or the Inspector rejects a family, the Architect gets the findings a
 
 These are some of the task families from this project. Any request that fits in a MuJoCo scene can go through the same pipeline.
 
-I’ve grouped the [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/f1fc115ee40702e5b3b89f0ccd6a4dc67d133b78) into **five families with eight tasks each**, 40 tasks in total.
+I’ve grouped the [task catalog](https://huggingface.co/datasets/semioz/kinetic-gym-tasks/tree/c0530f93c7a69d2125234b08314d368271208fcd) into **five families with eight tasks each**, 40 tasks in total.
 
 [[workshop-showcase]]
 
